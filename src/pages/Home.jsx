@@ -11,12 +11,24 @@ export default function Home() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState(null);
+  const [searchInput, setSearchInput] = useState(""); // raw typed value, updates instantly
+  const [search, setSearch] = useState(""); // debounced value, actually triggers the API call
+
+  // Debounce — waits 400ms after the user stops typing before updating `search`.
+  // Avoids firing an API call on every single keystroke.
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(searchInput.trim()), 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        const params = activeCategory ? { category: activeCategory } : {};
+        const params = {};
+        if (activeCategory) params.category = activeCategory;
+        if (search) params.search = search;
+
         const { data } = await api.get("/posts", { params });
         setPosts(data.posts || []);
       } catch (err) {
@@ -26,7 +38,7 @@ export default function Home() {
       }
     };
     fetchPosts();
-  }, [activeCategory]);
+  }, [activeCategory, search]);
 
   return (
     <div className="min-h-screen flex flex-col bg-bgLight">
@@ -50,7 +62,9 @@ export default function Home() {
 
           {!loading && posts.length === 0 && (
             <p className="text-sm text-textMuted col-span-2">
-              No posts yet. Be the first to publish one.
+              {search || activeCategory
+                ? "No posts match your search."
+                : "No posts yet. Be the first to publish one."}
             </p>
           )}
 
@@ -64,6 +78,8 @@ export default function Home() {
             <Search size={15} className="text-textMuted" />
             <input
               type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search posts"
               className="text-xs outline-none w-full placeholder:text-slate-400"
             />

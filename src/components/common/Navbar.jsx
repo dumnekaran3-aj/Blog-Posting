@@ -1,9 +1,17 @@
-import { Link, NavLink } from "react-router-dom";
-import { Search, Menu } from "lucide-react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Search, Menu, PenSquare, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   const navLink =
     "text-sm text-white/80 hover:text-white transition-colors";
@@ -33,12 +41,32 @@ export default function Navbar() {
           <button aria-label="Search" className="text-white/80 hover:text-white">
             <Search size={16} />
           </button>
-          <Link
-            to="/login"
-            className="bg-primary text-white text-sm px-4 py-1.5 rounded-md hover:bg-primary/90 transition-colors"
-          >
-            Sign in
-          </Link>
+
+          {user ? (
+            <>
+              <Link
+                to="/create"
+                className="flex items-center gap-1.5 bg-primary text-white text-sm px-4 py-1.5 rounded-md hover:bg-primary/90 transition-colors"
+              >
+                <PenSquare size={14} /> Write
+              </Link>
+              <span className="text-white/80 text-sm">{user.name}</span>
+              <button
+                onClick={handleLogout}
+                aria-label="Sign out"
+                className="text-white/80 hover:text-white"
+              >
+                <LogOut size={16} />
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              className="bg-primary text-white text-sm px-4 py-1.5 rounded-md hover:bg-primary/90 transition-colors"
+            >
+              Sign in
+            </Link>
+          )}
         </div>
 
         <button
