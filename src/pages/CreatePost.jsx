@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import MediaUploader from "../components/editor/MediaUploader";
+import { categories } from "../constants/categories";
 import api from "../services/api";
 
 const mediaTypes = ["text", "image", "video", "audio"];
-const categories = ["General", "Marketing", "Design", "Tech", "Lifestyle"];
 
 export default function CreatePost() {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ export default function CreatePost() {
     content: "",
     mediaType: "text",
     mediaUrl: "",
-    category: "General",
+    category: categories[0].value,
   });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -76,8 +76,8 @@ export default function CreatePost() {
               className="w-full text-sm border border-borderClr rounded-md px-3 py-2 outline-none focus:border-primary bg-white"
             >
               {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
+                <option key={cat.value} value={cat.value}>
+                  {cat.emoji} {cat.value}
                 </option>
               ))}
             </select>
