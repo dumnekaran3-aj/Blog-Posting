@@ -2,32 +2,43 @@ import { useState, useRef } from "react";
 import { Upload, X, Loader2 } from "lucide-react";
 import api from "../../services/api";
 
-// Captures a frame from a LOCAL video file (before upload) using an
-// offscreen <video> + <canvas>. Using a local blob URL (not the remote R2
-// URL) avoids canvas "tainted by cross-origin data" errors.
+// Captures a frame from a LOCAL video file using an offscreen <video> +
+// <canvas>. Includes a timeout safeguard — some video files report an
+// unreliable `duration` right after loading (Infinity/NaN until a first
+// seek), which can otherwise leave the "seeked" event never firing and the
+// promise hanging forever.
 const generateVideoThumbnail = (file) => {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
     video.preload = "metadata";
     video.muted = true;
     video.playsInline = true;
-    video.src = URL.createObjectURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    video.src = objectUrl;
 
-    video.onloadedmetadata = () => {
-      // Grab a frame a little into the clip rather than frame 0, which is
-      // often a black/blank frame
-      video.currentTime = Math.min(1, video.duration / 2 || 0);
+    const cleanup = () => URL.revokeObjectURL(objectUrl);
+
+    const timeoutId = setTimeout(() => {
+      cleanup();
+      reject(new Error("Thumbnail generation timed out"));
+    }, 8000);
+
+    video.onloadeddata = () => {
+      const seekTime =
+        isFinite(video.duration) && video.duration > 0 ? Math.min(1, video.duration / 2) : 0.1;
+      video.currentTime = seekTime;
     };
 
     video.onseeked = () => {
+      clearTimeout(timeoutId);
       const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      canvas.width = video.videoWidth || 320;
+      canvas.height = video.videoHeight || 180;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       canvas.toBlob(
         (blob) => {
-          URL.revokeObjectURL(video.src);
+          cleanup();
           if (blob) resolve(blob);
           else reject(new Error("Could not generate thumbnail"));
         },
@@ -36,13 +47,17 @@ const generateVideoThumbnail = (file) => {
       );
     };
 
-    video.onerror = () => reject(new Error("Could not read video file"));
+    video.onerror = () => {
+      clearTimeout(timeoutId);
+      cleanup();
+      reject(new Error("Could not read video file"));
+    };
   });
 };
 
-// Reusable across Create Post and Edit Post. Parent controls mediaType;
-// this component handles picking a file, uploading it, and (for video)
-// auto-generating + uploading a thumbnail snapshot.
+// Reusable across Create Post and Edit Post. Uploads DIRECTLY to R2 via a
+// presigned URL — our backend only issues the URL, the file itself never
+// passes through Node, which is much faster for video/audio.
 export default function MediaUploader({ mediaType, mediaUrl, onUploaded, onThumbnailGenerated }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -54,13 +69,24 @@ export default function MediaUploader({ mediaType, mediaUrl, onUploaded, onThumb
     audio: "audio/mpeg,audio/mp3,audio/wav",
   };
 
-  const uploadToServer = async (fileOrBlob, filename) => {
-    const formData = new FormData();
-    formData.append("file", fileOrBlob, filename);
-    const { data } = await api.post("/upload", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+  const uploadDirectToR2 = async (fileOrBlob, filename, contentType) => {
+    // Step 1 — ask our backend for a presigned URL (fast, tiny request)
+    const { data } = await api.post("/upload/presign", { filename, contentType });
+
+    // Step 2 — PUT the file straight to R2. Plain fetch here on purpose:
+    // this goes to R2, not our API, so no Authorization header or baseURL
+    // from the shared axios instance should be attached.
+    const putResponse = await fetch(data.uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": contentType },
+      body: fileOrBlob,
     });
-    return data.url;
+
+    if (!putResponse.ok) {
+      throw new Error("Upload to storage failed");
+    }
+
+    return data.publicUrl;
   };
 
   const handleFileChange = async (e) => {
@@ -71,20 +97,15 @@ export default function MediaUploader({ mediaType, mediaUrl, onUploaded, onThumb
     setUploading(true);
 
     try {
-      const url = await uploadToServer(file, file.name);
+      const url = await uploadDirectToR2(file, file.name, file.type);
       onUploaded(url);
 
-      // Video only — generate a real snapshot frame and upload it as the
-      // post's thumbnail, so the card shows an actual preview instead of a
-      // generic icon
       if (mediaType === "video" && onThumbnailGenerated) {
         try {
           const thumbBlob = await generateVideoThumbnail(file);
-          const thumbUrl = await uploadToServer(thumbBlob, "thumbnail.jpg");
+          const thumbUrl = await uploadDirectToR2(thumbBlob, "thumbnail.jpg", "image/jpeg");
           onThumbnailGenerated(thumbUrl);
         } catch (thumbErr) {
-          // Thumbnail generation failing shouldn't block the whole upload —
-          // the post still works, just without a snapshot preview
           console.warn("Thumbnail generation failed:", thumbErr.message);
         }
       }

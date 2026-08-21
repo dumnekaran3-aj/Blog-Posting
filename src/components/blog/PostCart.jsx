@@ -2,9 +2,6 @@ import { Link } from "react-router-dom";
 import { Heart, MessageCircle, Eye, Share2, PlayCircle, Headphones } from "lucide-react";
 
 const categoryStyles = {
-  Marketing: "bg-secondary/10 text-secondary",
-  Design: "bg-accent/10 text-accent",
-  Tech: "bg-primary/10 text-primary",
   default: "bg-textMuted/10 text-textMuted",
 };
 
@@ -14,6 +11,7 @@ export default function PostCard({ post }) {
     slug,
     title,
     thumbnail,
+    mediaUrl,
     category,
     author,
     createdAt,
@@ -25,27 +23,37 @@ export default function PostCard({ post }) {
 
   const badgeClass = categoryStyles[category] || categoryStyles.default;
 
+  // For images, the media file itself IS the preview. For video, we use the
+  // auto-generated snapshot frame (thumbnail). Audio has no visual frame to
+  // show, so it falls back to the icon treatment below.
+  const previewImage = mediaType === "image" ? mediaUrl : thumbnail;
+
   return (
     <div className="bg-white border border-borderClr rounded-xl overflow-hidden hover:border-primary/40 transition-colors">
       <Link to={`/blog/${slug}`}>
-        <div className="relative bg-slate-300 h-36">
-          {thumbnail && (
+        <div className="relative h-36 overflow-hidden">
+          {previewImage ? (
             <img
-              src={thumbnail}
+              src={previewImage}
               alt={title}
               className="w-full h-full object-cover"
             />
+          ) : mediaType === "audio" ? (
+            // No real snapshot possible for audio — attractive gradient + icon instead
+            <div className="w-full h-full bg-gradient-to-br from-secondary/20 via-primary/10 to-accent/20 flex items-center justify-center">
+              <div className="bg-white/80 rounded-full p-3">
+                <Headphones size={22} className="text-secondary" />
+              </div>
+            </div>
+          ) : (
+            <div className="w-full h-full bg-slate-300" />
           )}
+
           {mediaType === "video" && (
             <PlayCircle
-              className="absolute inset-0 m-auto text-white drop-shadow"
-              size={30}
-            />
-          )}
-          {mediaType === "audio" && (
-            <Headphones
-              className="absolute inset-0 m-auto text-white drop-shadow"
-              size={26}
+              className="absolute inset-0 m-auto text-white drop-shadow-lg"
+              size={34}
+              fill="rgba(0,0,0,0.35)"
             />
           )}
         </div>

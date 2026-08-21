@@ -8,6 +8,8 @@ import CreatePost from "./pages/CreatePost";
 import PrivateRoute from "./routes/PrivateRoute";
 import Dashboard from "./pages/Dashboard";
 import EditPost from "./pages/EditPost";
+import Categories from "./pages/Categories";
+import CategoryPosts from "./pages/CategoryPosts";
 
 //legal process pages
 
@@ -55,7 +57,8 @@ function App() {
     </PrivateRoute>
   }
 />
-
+<Route path="/categories" element={<Categories />} />
+<Route path="/category/:slug" element={<CategoryPosts />} />
 
 
           <Route path="/" element={<Home />} />

@@ -13,13 +13,19 @@ export default function PostForm({ initialData, onSubmit, mode = "create" }) {
     content: initialData?.content || "",
     mediaType: initialData?.mediaType || "text",
     mediaUrl: initialData?.mediaUrl || "",
+    thumbnail: initialData?.thumbnail || "",
     category: initialData?.category || categories[0].value,
   });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const handleMediaTypeChange = (type) => {
-    setForm({ ...form, mediaType: type, mediaUrl: type === form.mediaType ? form.mediaUrl : "" });
+    setForm({
+      ...form,
+      mediaType: type,
+      mediaUrl: type === form.mediaType ? form.mediaUrl : "",
+      thumbnail: type === form.mediaType ? form.thumbnail : "",
+    });
   };
 
   const handleSubmit = async (status) => {
@@ -96,7 +102,8 @@ export default function PostForm({ initialData, onSubmit, mode = "create" }) {
         <MediaUploader
           mediaType={form.mediaType}
           mediaUrl={form.mediaUrl}
-          onUploaded={(url) => setForm({ ...form, mediaUrl: url })}
+          onUploaded={(url) => setForm((prev) => ({ ...prev, mediaUrl: url }))}
+          onThumbnailGenerated={(url) => setForm((prev) => ({ ...prev, thumbnail: url }))}
         />
       )}
 
