@@ -88,7 +88,20 @@ export default function BlogDetail() {
             <h1 className="text-2xl font-medium text-textDark mt-3 mb-2">{post.title}</h1>
 
             <div className="flex items-center gap-2 text-xs text-textMuted mb-5">
-              <span>By {post.author?.name || "Unknown"}</span>
+              <Link to={`/profile/${post.author?._id || post.author?.id}`} className="flex items-center gap-2 hover:text-primary">
+                {post.author?.avatar ? (
+                  <img
+                    src={post.author.avatar}
+                    alt={post.author.name}
+                    className="w-6 h-6 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-medium">
+                    {post.author?.name?.charAt(0).toUpperCase() || "U"}
+                  </span>
+                )}
+                <span>By {post.author?.name || "Unknown"}</span>
+              </Link>
               <span>&middot;</span>
               <span>
                 {new Date(post.createdAt).toLocaleDateString("en-IN", {

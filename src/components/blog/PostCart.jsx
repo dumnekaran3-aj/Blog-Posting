@@ -70,8 +70,22 @@ export default function PostCard({ post }) {
           </h3>
         </Link>
 
-        <p className="text-xs text-textMuted mb-2">
-          By {author?.name || "Unknown"} &middot;{" "}
+        <p className="text-xs text-textMuted mb-2 flex items-center gap-1.5">
+          <Link
+            to={`/profile/${author?._id || author?.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1.5 hover:text-primary"
+          >
+            {author?.avatar ? (
+              <img src={author.avatar} alt={author.name} className="w-4 h-4 rounded-full object-cover" />
+            ) : (
+              <span className="w-4 h-4 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[8px] font-medium">
+                {author?.name?.charAt(0).toUpperCase() || "U"}
+              </span>
+            )}
+            By {author?.name || "Unknown"}
+          </Link>
+          &middot;{" "}
           {new Date(createdAt).toLocaleDateString("en-IN", {
             day: "numeric",
             month: "short",

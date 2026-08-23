@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Upload, X, Loader2 } from "lucide-react";
-import api from "../../services/api";
+import uploadDirectToR2 from "../../utils/uploadDirect";
 
 // Captures a frame from a LOCAL video file using an offscreen <video> +
 // <canvas>. Includes a timeout safeguard — some video files report an
@@ -67,26 +67,6 @@ export default function MediaUploader({ mediaType, mediaUrl, onUploaded, onThumb
     image: "image/jpeg,image/png,image/webp,image/gif",
     video: "video/mp4,video/webm",
     audio: "audio/mpeg,audio/mp3,audio/wav",
-  };
-
-  const uploadDirectToR2 = async (fileOrBlob, filename, contentType) => {
-    // Step 1 — ask our backend for a presigned URL (fast, tiny request)
-    const { data } = await api.post("/upload/presign", { filename, contentType });
-
-    // Step 2 — PUT the file straight to R2. Plain fetch here on purpose:
-    // this goes to R2, not our API, so no Authorization header or baseURL
-    // from the shared axios instance should be attached.
-    const putResponse = await fetch(data.uploadUrl, {
-      method: "PUT",
-      headers: { "Content-Type": contentType },
-      body: fileOrBlob,
-    });
-
-    if (!putResponse.ok) {
-      throw new Error("Upload to storage failed");
-    }
-
-    return data.publicUrl;
   };
 
   const handleFileChange = async (e) => {

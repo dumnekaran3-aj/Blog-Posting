@@ -21,6 +21,7 @@ import EditorialPolicy from "./pages/legal/EditorialPolicy";
 import Disclaimer from "./pages/legal/Disclaimer";
 import CorrectionsPolicy from "./pages/legal/CorrectionsPolicy";
 import WriteForUs from "./pages/legal/WriteForUs";
+import PublicProfile from "./pages/PublicProfile";
 
 
 
@@ -40,6 +41,7 @@ function App() {
 <Route path="/disclaimer" element={<Disclaimer />} />
 <Route path="/corrections-policy" element={<CorrectionsPolicy />} />
 <Route path="/write-for-us" element={<WriteForUs />} />
+<Route path="/profile/:id" element={<PublicProfile />} />
 
 <Route
   path="/dashboard"
@@ -68,6 +70,7 @@ function App() {
 
           <Route path="/create"element={ <PrivateRoute>  <CreatePost />
           </PrivateRoute> } />
+
 
 
         </Routes>
