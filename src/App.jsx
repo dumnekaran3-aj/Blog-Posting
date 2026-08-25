@@ -24,57 +24,95 @@ import WriteForUs from "./pages/legal/WriteForUs";
 import PublicProfile from "./pages/PublicProfile";
 
 
+//admin imports
+
+import { AdminAuthProvider } from "./context/AdminAuthContext";
+import AdminPrivateRoute from "./routes/AdminPrivateRoute";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminOverview from "./pages/admin/AdminOverview";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPosts from "./pages/admin/AdminPosts";
+import AdminComments from "./pages/admin/AdminComments";
+import AdminCategories from "./pages/admin/AdminCategories";
+import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
+import AdminAccounts from "./pages/admin/AdminAccounts";
+
+
 
 
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
+      <AdminAuthProvider>
+        <BrowserRouter>
+          <Routes>
 
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/contact" element={<ContactUs />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/editorial-policy" element={<EditorialPolicy />} />
+            <Route path="/disclaimer" element={<Disclaimer />} />
+            <Route path="/corrections-policy" element={<CorrectionsPolicy />} />
+            <Route path="/write-for-us" element={<WriteForUs />} />
+            <Route path="/profile/:id" element={<PublicProfile />} />
 
-<Route path="/about" element={<AboutUs />} />
-<Route path="/contact" element={<ContactUs />} />
-<Route path="/privacy-policy" element={<PrivacyPolicy />} />
-<Route path="/terms-of-service" element={<TermsOfService />} />
-<Route path="/editorial-policy" element={<EditorialPolicy />} />
-<Route path="/disclaimer" element={<Disclaimer />} />
-<Route path="/corrections-policy" element={<CorrectionsPolicy />} />
-<Route path="/write-for-us" element={<WriteForUs />} />
-<Route path="/profile/:id" element={<PublicProfile />} />
+            <Route
+              path="/dashboard"
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/edit/:id"
+              element={
+                <PrivateRoute>
+                  <EditPost />
+                </PrivateRoute>
+              }
+            />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/category/:slug" element={<CategoryPosts />} />
 
-<Route
-  path="/dashboard"
-  element={
-    <PrivateRoute>
-      <Dashboard />
-    </PrivateRoute>
-  }
-/>
-<Route
-  path="/edit/:id"
-  element={
-    <PrivateRoute>
-      <EditPost />
-    </PrivateRoute>
-  }
-/>
-<Route path="/categories" element={<Categories />} />
-<Route path="/category/:slug" element={<CategoryPosts />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/blog/:slug" element={<BlogDetail />} />
 
+            <Route
+              path="/create"
+              element={
+                <PrivateRoute>
+                  <CreatePost />
+                </PrivateRoute>
+              }
+            />
 
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/blog/:slug" element={<BlogDetail />} />
+            {/* Admin panel — completely separate auth, separate login page */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route
+              path="/admin"
+              element={
+                <AdminPrivateRoute>
+                  <AdminLayout />
+                </AdminPrivateRoute>
+              }
+            >
+              <Route index element={<AdminOverview />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="posts" element={<AdminPosts />} />
+              <Route path="comments" element={<AdminComments />} />
+              <Route path="categories" element={<AdminCategories />} />
+              <Route path="logs" element={<AdminAuditLogs />} />
+              <Route path="accounts" element={<AdminAccounts />} />
+            </Route>
 
-          <Route path="/create"element={ <PrivateRoute>  <CreatePost />
-          </PrivateRoute> } />
-
-
-
-        </Routes>
-      </BrowserRouter>
+          </Routes>
+        </BrowserRouter>
+      </AdminAuthProvider>
     </AuthProvider>
   );
 }
