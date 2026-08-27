@@ -10,24 +10,25 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { ADMIN_PATH } from "../../constants/adminPath";
 
 const navItems = [
-  { to: "/admin", label: "Overview", icon: LayoutDashboard, roles: ["admin", "moderator", "analyst"], end: true },
-  { to: "/admin/users", label: "Users", icon: Users, roles: ["admin", "moderator"] },
-  { to: "/admin/posts", label: "Posts", icon: FileText, roles: ["admin", "moderator"] },
-  { to: "/admin/comments", label: "Comments", icon: MessageSquare, roles: ["admin", "moderator"] },
-  { to: "/admin/categories", label: "Categories", icon: Tags, roles: ["admin", "moderator", "analyst"] },
-  { to: "/admin/logs", label: "Audit logs", icon: ScrollText, roles: ["admin"] },
-  { to: "/admin/accounts", label: "Admin accounts", icon: UserCog, roles: ["admin"] },
+  { to: `/${ADMIN_PATH}`, label: "Overview", icon: LayoutDashboard, roles: ["admin", "moderator", "analyst"], end: true },
+  { to: `/${ADMIN_PATH}/users`, label: "Users", icon: Users, roles: ["admin", "moderator"] },
+  { to: `/${ADMIN_PATH}/posts`, label: "Posts", icon: FileText, roles: ["admin", "moderator"] },
+  { to: `/${ADMIN_PATH}/comments`, label: "Comments", icon: MessageSquare, roles: ["admin", "moderator"] },
+  { to: `/${ADMIN_PATH}/categories`, label: "Categories", icon: Tags, roles: ["admin", "moderator", "analyst"] },
+  { to: `/${ADMIN_PATH}/logs`, label: "Audit logs", icon: ScrollText, roles: ["admin"] },
+  { to: `/${ADMIN_PATH}/accounts`, label: "Admin accounts", icon: UserCog, roles: ["admin"] },
 ];
 
 export default function AdminLayout() {
   const { admin, logout } = useAdminAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate("/admin/login");
+  const handleLogout = async () => {
+    await logout();
+    navigate(`/${ADMIN_PATH}/login`);
   };
 
   const visibleItems = navItems.filter((item) => item.roles.includes(admin?.role));

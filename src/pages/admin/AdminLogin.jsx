@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { ADMIN_PATH } from "../../constants/adminPath";
 
 export default function AdminLogin() {
   const { loginStep1, verify2FA } = useAdminAuth();
@@ -39,7 +40,7 @@ export default function AdminLogin() {
     setLoading(true);
     try {
       await verify2FA({ pendingToken, code });
-      navigate("/admin");
+      navigate(`/${ADMIN_PATH}`);
     } catch (err) {
       setError(err.response?.data?.msg || "Invalid or expired code");
     } finally {
@@ -136,4 +137,4 @@ export default function AdminLogin() {
       </div>
     </div>
   );
-}
+}   

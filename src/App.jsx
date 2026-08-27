@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { AdminAuthProvider } from "./context/AdminAuthContext";
+import { ADMIN_PATH } from "./constants/adminPath";
+
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -10,8 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import EditPost from "./pages/EditPost";
 import Categories from "./pages/Categories";
 import CategoryPosts from "./pages/CategoryPosts";
-
-//legal process pages
+import PublicProfile from "./pages/PublicProfile";
 
 import AboutUs from "./pages/legal/AboutUs";
 import ContactUs from "./pages/legal/ContactUs";
@@ -21,12 +23,7 @@ import EditorialPolicy from "./pages/legal/EditorialPolicy";
 import Disclaimer from "./pages/legal/Disclaimer";
 import CorrectionsPolicy from "./pages/legal/CorrectionsPolicy";
 import WriteForUs from "./pages/legal/WriteForUs";
-import PublicProfile from "./pages/PublicProfile";
 
-
-//admin imports
-
-import { AdminAuthProvider } from "./context/AdminAuthContext";
 import AdminPrivateRoute from "./routes/AdminPrivateRoute";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -37,9 +34,6 @@ import AdminComments from "./pages/admin/AdminComments";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminAccounts from "./pages/admin/AdminAccounts";
-
-
-
 
 function App() {
   return (
@@ -91,10 +85,10 @@ function App() {
               }
             />
 
-            {/* Admin panel — completely separate auth, separate login page */}
-            <Route path="/admin/login" element={<AdminLogin />} />
+            {/* Admin panel — path comes from VITE_ADMIN_PATH, never hardcoded "/admin" */}
+            <Route path={`/${ADMIN_PATH}/login`} element={<AdminLogin />} />
             <Route
-              path="/admin"
+              path={`/${ADMIN_PATH}`}
               element={
                 <AdminPrivateRoute>
                   <AdminLayout />
