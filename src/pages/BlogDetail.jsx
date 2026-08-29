@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Eye } from "lucide-react";
 import Navbar from "../components/common/Navbar";
@@ -31,6 +31,29 @@ export default function BlogDetail() {
     };
     fetchPost();
   }, [slug]);
+
+  // View-duration tracking — feed algorithm ke timeImpression signal ke
+  // liye. 30 second post ko dekhne ke baad ek baar fire hota hai. Sirf
+  // logged-in users ke liye (backend endpoint ko dedup ke liye stable user
+  // id chahiye — LikeButton jaisa hi pattern). Ek hi baar fire ho, isliye
+  // 'sent' ref use kiya — StrictMode dev mein effect double-run hone se bhi
+  // safe rahega, aur agar user page se jaldi chala jaye (30s se pehle) to
+  // timeout cleanup ho jayega, koi call nahi jayegi.
+  const viewTrackedRef = useRef(false);
+  useEffect(() => {
+    if (!post?._id || !user || viewTrackedRef.current) return;
+
+    const VIEW_THRESHOLD_MS = 30 * 1000;
+    const timer = setTimeout(() => {
+      if (viewTrackedRef.current) return;
+      viewTrackedRef.current = true;
+      api.post(`/posts/${post._id}/view-duration`, { duration: 30 }).catch(() => {
+        // background signal hai — fail hone pe user ko kuch dikhana zaroori nahi
+      });
+    }, VIEW_THRESHOLD_MS);
+
+    return () => clearTimeout(timer);
+  }, [post?._id, user]);
 
   const renderMedia = () => {
     if (!post?.mediaUrl) return null;
@@ -122,7 +145,7 @@ export default function BlogDetail() {
               <LikeButton
                 postId={post._id}
                 initialLikesCount={post.likesCount}
-                initialLiked={user ? post.likes?.includes(user.id) : false}
+                initialLiked={post.isLiked}
                 size="lg"
               />
               <ShareButton url={`/blog/${post.slug}`} title={post.title} size="lg" />

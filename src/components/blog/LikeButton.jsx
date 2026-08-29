@@ -43,7 +43,8 @@ export default function LikeButton({ postId, initialLikesCount = 0, initialLiked
   return (
     <button
       onClick={handleClick}
-      className={`flex items-center gap-1 ${textSize} transition-colors ${
+      disabled={loading}
+      className={`flex items-center gap-1 ${textSize} transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
         liked ? "text-accent" : "text-amber-700 hover:text-accent"
       }`}
       aria-label={liked ? "Unlike post" : "Like post"}
