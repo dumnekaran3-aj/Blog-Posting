@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
-import { Heart, MessageCircle, Eye, Share2, PlayCircle, Headphones } from "lucide-react";
+import { MessageCircle, Eye, PlayCircle, Headphones } from "lucide-react";
+import LikeButton from "./LikeButton";
+import ShareButton from "./ShareButton";
 
 const categoryStyles = {
   default: "bg-textMuted/10 text-textMuted",
@@ -8,6 +10,7 @@ const categoryStyles = {
 // mediaType: "image" | "video" | "audio" | "text"
 export default function PostCard({ post }) {
   const {
+    _id,
     slug,
     title,
     thumbnail,
@@ -19,6 +22,7 @@ export default function PostCard({ post }) {
     commentsCount,
     viewsCount,
     mediaType,
+    isLiked,
   } = post;
 
   const badgeClass = categoryStyles[category] || categoryStyles.default;
@@ -93,27 +97,25 @@ export default function PostCard({ post }) {
         </p>
 
         <div className="flex items-center gap-3 border-t border-borderClr pt-2">
-          <button
-            className="flex items-center gap-1 text-[11px] text-amber-700 hover:text-accent"
-            aria-label="Like post"
-          >
-            <Heart size={13} /> {likesCount ?? 0}
-          </button>
-          <button
+          <LikeButton
+            postId={_id}
+            initialLikesCount={likesCount}
+            initialLiked={isLiked}
+            size="sm"
+          />
+          <Link
+            to={`/blog/${slug}#comments`}
             className="flex items-center gap-1 text-[11px] text-secondary hover:text-secondary/80"
             aria-label="View comments"
           >
             <MessageCircle size={13} /> {commentsCount ?? 0}
-          </button>
+          </Link>
           <span className="flex items-center gap-1 text-[11px] text-textMuted">
             <Eye size={13} /> {viewsCount ?? 0}
           </span>
-          <button
-            className="flex items-center gap-1 text-[11px] text-primary ml-auto hover:text-primary/80"
-            aria-label="Share post"
-          >
-            <Share2 size={13} />
-          </button>
+          <div className="ml-auto">
+            <ShareButton url={`/blog/${slug}`} title={title} />
+          </div>
         </div>
       </div>
     </div>

@@ -44,15 +44,23 @@ export default function BlogDetail() {
     if (!post?._id || !user || viewTrackedRef.current) return;
 
     const VIEW_THRESHOLD_MS = 30 * 1000;
+    console.log(`[view-tracking] timer started for post ${post._id} — fires in 30s`);
     const timer = setTimeout(() => {
       if (viewTrackedRef.current) return;
       viewTrackedRef.current = true;
-      api.post(`/posts/${post._id}/view-duration`, { duration: 30 }).catch(() => {
-        // background signal hai — fail hone pe user ko kuch dikhana zaroori nahi
-      });
+      console.log(`[view-tracking] 30s reached — sending view-duration for post ${post._id}`);
+      api
+        .post(`/posts/${post._id}/view-duration`, { duration: 30 })
+        .then(() => console.log(`[view-tracking] success`))
+        .catch((err) =>
+          console.error(`[view-tracking] failed:`, err.response?.status, err.response?.data || err.message)
+        );
     }, VIEW_THRESHOLD_MS);
 
-    return () => clearTimeout(timer);
+    return () => {
+      console.log(`[view-tracking] cleanup — timer cleared (left before 30s, or effect re-ran)`);
+      clearTimeout(timer);
+    };
   }, [post?._id, user]);
 
   const renderMedia = () => {

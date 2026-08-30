@@ -1,11 +1,18 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import adminApi from "../services/adminApi";
+import { ADMIN_PATH } from "../constants/adminPath";
 
 const AdminAuthContext = createContext(null);
 
+// Admin panel ke alawa kisi bhi public page (Home, BlogDetail, etc.) pe
+// ye check chalne ki zaroorat nahi — normal reader kabhi admin route
+// dekhega hi nahi. Path-check se unnecessary 401 aur ek extra network
+// call har page load pe bach jati hai.
+const isOnAdminRoute = () => window.location.pathname.startsWith(`/${ADMIN_PATH}`);
+
 export function AdminAuthProvider({ children }) {
   const [admin, setAdmin] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isOnAdminRoute());
 
   // On every app load, ASK THE SERVER if the session is still valid —
   // never trust anything stored client-side. This is what fixes "yesterday's
@@ -22,7 +29,9 @@ export function AdminAuthProvider({ children }) {
   };
 
   useEffect(() => {
-    checkSession();
+    if (isOnAdminRoute()) {
+      checkSession();
+    }
 
     // If any API call anywhere in the admin panel gets a 401 mid-session
     // (cookie expired while browsing), snap back to logged-out immediately
