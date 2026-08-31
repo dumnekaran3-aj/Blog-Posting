@@ -3,6 +3,7 @@ import { Search, Menu, PenSquare, LogOut, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { primaryCategories, moreCategories, categorySlug } from "../../constants/categories";
+import NotificationBell from "./NotificationBell";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -87,6 +88,7 @@ export default function Navbar() {
               >
                 <PenSquare size={14} /> Write
               </Link>
+              <NotificationBell />
               <Link to="/dashboard" className="text-white/80 text-sm hover:text-white">
                 {user.name}
               </Link>
@@ -130,6 +132,10 @@ export default function Navbar() {
               <Link to="/create" className="text-sm text-white" onClick={() => setMenuOpen(false)}>
                 Write
               </Link>
+              <div className="flex items-center gap-2">
+                <NotificationBell />
+                <span className="text-sm text-white">Notifications</span>
+              </div>
               <Link to="/dashboard" className="text-sm text-white" onClick={() => setMenuOpen(false)}>
                 {user.name}
               </Link>

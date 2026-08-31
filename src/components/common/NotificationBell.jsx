@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bell, Heart, MessageCircle, UserPlus, CornerDownRight } from "lucide-react";
+import { Bell, Heart, MessageCircle, UserPlus, CornerDownRight, Rss } from "lucide-react";
 import api from "../../services/api";
 
 const typeIcon = {
@@ -8,6 +8,7 @@ const typeIcon = {
   like: { Icon: Heart, color: "text-accent" },
   comment: { Icon: MessageCircle, color: "text-secondary" },
   reply: { Icon: CornerDownRight, color: "text-secondary" },
+  new_post: { Icon: Rss, color: "text-primary" },
 };
 
 const typeText = {
@@ -15,6 +16,7 @@ const typeText = {
   like: "liked your post",
   comment: "commented on your post",
   reply: "replied to your comment",
+  new_post: "published a new post",
 };
 
 export default function NotificationBell() {

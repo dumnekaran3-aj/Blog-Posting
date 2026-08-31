@@ -41,6 +41,14 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const changePassword = async ({ currentPassword, newPassword }) => {
+    // Password kabhi user/localStorage state mein store nahi karte —
+    // sirf server ko bhejte hain, response mein bhi kuch save karne
+    // layak nahi (koi token/user field return nahi hota is route se)
+    const { data } = await api.put("/auth/change-password", { currentPassword, newPassword });
+    return data;
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -48,7 +56,9 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signup, verifyOtp, login, updateProfile, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, signup, verifyOtp, login, updateProfile, changePassword, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

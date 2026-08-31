@@ -14,6 +14,7 @@ import EditPost from "./pages/EditPost";
 import Categories from "./pages/Categories";
 import CategoryPosts from "./pages/CategoryPosts";
 import PublicProfile from "./pages/PublicProfile";
+import settings from "./pages/settings"
 
 import AboutUs from "./pages/legal/AboutUs";
 import ContactUs from "./pages/legal/ContactUs";
@@ -51,6 +52,7 @@ function App() {
             <Route path="/corrections-policy" element={<CorrectionsPolicy />} />
             <Route path="/write-for-us" element={<WriteForUs />} />
             <Route path="/profile/:id" element={<PublicProfile />} />
+            <Route path="/settings/:id"  element={<settings/>} />
 
             <Route
               path="/dashboard"
