@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Eye, Heart, Pencil, Trash2, FileText } from "lucide-react";
+import { Eye, Heart, Pencil, Trash2, FileText, Settings as SettingsIcon } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import Lightbox from "../components/common/Lightbox";
@@ -132,6 +132,13 @@ export default function Dashboard() {
               <p className="text-[11px] text-primary hover:underline">Following</p>
             </button>
           </div>
+
+          <Link
+            to="/settings"
+            className="flex items-center gap-1.5 text-xs border border-borderClr rounded-md px-3 py-1.5 text-textDark hover:border-primary/40 shrink-0"
+          >
+            <SettingsIcon size={13} /> Settings
+          </Link>
         </div>
 
         {/* Interests */}

@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import PostCard from "../components/blog/PostCart";
+import Pagination from "../components/common/Pagination";
 import api from "../services/api";
 
 const categories = ["Marketing", "Design", "Tech", "Lifestyle"];
@@ -13,6 +14,8 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState(null);
   const [searchInput, setSearchInput] = useState(""); // raw typed value, updates instantly
   const [search, setSearch] = useState(""); // debounced value, actually triggers the API call
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Debounce — waits 400ms after the user stops typing before updating `search`.
   // Avoids firing an API call on every single keystroke.
@@ -21,16 +24,24 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
+  // Filter (category/search) badalte hi page 1 pe wapas — warna user kisi
+  // filter change ke baad bhi purane page number pe atka reh sakta hai jahan
+  // naye filter ke hisaab se posts hi na ho
+  useEffect(() => {
+    setPage(1);
+  }, [activeCategory, search]);
+
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        const params = {};
+        const params = { page };
         if (activeCategory) params.category = activeCategory;
         if (search) params.search = search;
 
         const { data } = await api.get("/posts", { params });
         setPosts(data.posts || []);
+        setTotalPages(data.totalPages || 1);
       } catch (err) {
         console.error("Failed to load posts:", err.message);
       } finally {
@@ -38,7 +49,12 @@ export default function Home() {
       }
     };
     fetchPosts();
-  }, [activeCategory, search]);
+  }, [activeCategory, search, page]);
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-bgLight">
@@ -55,21 +71,27 @@ export default function Home() {
 
       <section className="max-w-6xl mx-auto w-full px-6 pb-10 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-6">
         {/* Post grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {loading && (
-            <p className="text-sm text-textMuted col-span-2">Loading posts...</p>
-          )}
+        <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {loading && (
+              <p className="text-sm text-textMuted col-span-2">Loading posts...</p>
+            )}
 
-          {!loading && posts.length === 0 && (
-            <p className="text-sm text-textMuted col-span-2">
-              {search || activeCategory
-                ? "No posts match your search."
-                : "No posts yet. Be the first to publish one."}
-            </p>
-          )}
+            {!loading && posts.length === 0 && (
+              <p className="text-sm text-textMuted col-span-2">
+                {search || activeCategory
+                  ? "No posts match your search."
+                  : "No posts yet. Be the first to publish one."}
+              </p>
+            )}
 
-          {!loading &&
-            posts.map((post) => <PostCard key={post._id} post={post} />)}
+            {!loading &&
+              posts.map((post) => <PostCard key={post._id} post={post} />)}
+          </div>
+
+          {!loading && posts.length > 0 && (
+            <Pagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
+          )}
         </div>
 
         {/* Sidebar */}

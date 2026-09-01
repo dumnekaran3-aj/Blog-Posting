@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import PostCard from "../components/blog/PostCart";
+import Pagination from "../components/common/Pagination";
 import { categories, categorySlug } from "../constants/categories";
 import api from "../services/api";
 
@@ -10,10 +11,18 @@ export default function CategoryPosts() {
   const { slug } = useParams();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Reverse-lookup: the URL only has the slug, backend filter needs the
   // exact category string (emoji-free) as originally stored on posts
   const category = categories.find((c) => categorySlug(c.value) === slug);
+
+  // Category badalne pe page 1 pe wapas — purani category ke page number
+  // pe atka rehna galat hoga jab naye category mein utne pages hi na ho
+  useEffect(() => {
+    setPage(1);
+  }, [slug]);
 
   useEffect(() => {
     if (!category) return;
@@ -21,8 +30,9 @@ export default function CategoryPosts() {
     const fetchPosts = async () => {
       setLoading(true);
       try {
-        const { data } = await api.get("/posts", { params: { category: category.value } });
+        const { data } = await api.get("/posts", { params: { category: category.value, page } });
         setPosts(data.posts || []);
+        setTotalPages(data.totalPages || 1);
       } catch (err) {
         // leave posts empty on failure
       } finally {
@@ -30,7 +40,12 @@ export default function CategoryPosts() {
       }
     };
     fetchPosts();
-  }, [slug]);
+  }, [slug, page]);
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   if (!category) {
     return (
@@ -66,6 +81,10 @@ export default function CategoryPosts() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {!loading && posts.map((post) => <PostCard key={post._id} post={post} />)}
         </div>
+
+        {!loading && posts.length > 0 && (
+          <Pagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
+        )}
       </div>
 
       <Footer />

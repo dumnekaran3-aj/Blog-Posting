@@ -32,6 +32,74 @@ export default function BlogDetail() {
     fetchPost();
   }, [slug]);
 
+  // ---- Time-on-page tracking (feeds the "timeImpression" ranking signal) ----
+  // Backend har user ke liye is post ka duration EXACTLY EK BAAR EVER count
+  // karta hai (PostView unique index se permanent dedup) — isliye humein
+  // baar-baar bhejne ki zaroorat nahi, bas jab user page chhode (SPA se
+  // navigate kare, ya tab/window band kare) tab ek baar total active time bhej dena hai.
+  useEffect(() => {
+    // Route protected hai (login required) — agar user logged in nahi hai
+    // to kuch track hi nahi karna
+    if (!post?._id || !user?.id) return;
+
+    const MIN_TRACKED_SECONDS = 4; // galti se click karke turant back jaana "engagement" nahi hai
+
+    let activeStartedAt = Date.now(); // null jab tab hidden ho (paused)
+    let accumulatedSeconds = 0;
+    let alreadySent = false;
+
+    const sendDuration = () => {
+      if (alreadySent) return;
+
+      const activeNow = activeStartedAt ? (Date.now() - activeStartedAt) / 1000 : 0;
+      const totalSeconds = Math.round(accumulatedSeconds + activeNow);
+      if (totalSeconds < MIN_TRACKED_SECONDS) return;
+
+      alreadySent = true;
+
+      // sendBeacon custom Authorization header allow nahi karta, aur ye route
+      // protected hai — isliye fetch + keepalive use kar rahe hain, jo tab
+      // band hote waqt bhi request complete hone deta hai (regular axios/XHR
+      // us case mein reliably kaam nahi karta).
+      const token = localStorage.getItem("token");
+      const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+      fetch(`${baseURL}/posts/${post._id}/view-duration`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ duration: totalSeconds }),
+        keepalive: true,
+      }).catch(() => {}); // best-effort — fail ho jaye to bhi user experience pe asar nahi
+    };
+
+    // Tab background mein jaye to timer pause karo — sirf actual active
+    // reading time count hona chahiye, background time nahi
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (activeStartedAt) {
+          accumulatedSeconds += (Date.now() - activeStartedAt) / 1000;
+          activeStartedAt = null;
+        }
+      } else {
+        activeStartedAt = Date.now();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    // 'pagehide' beforeunload se zyada reliable hai (mobile Safari/bfcache
+    // ke saath bhi kaam karta hai) — tab/window band hone pe fire hota hai
+    window.addEventListener("pagehide", sendDuration);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", sendDuration);
+      sendDuration(); // SPA ke andar dusre page pe navigate karne pe bhi bhej do
+    };
+  }, [post?._id, user?.id]);
+
   const renderMedia = () => {
     if (!post?.mediaUrl) return null;
 
