@@ -309,6 +309,9 @@ export default function Settings() {
           </button>
         </div>
 
+
+        
+
         {/* ---- Logout ---- */}
         <button
           onClick={handleLogout}
