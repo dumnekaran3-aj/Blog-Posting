@@ -1,15 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 export default function LikeButton({ postId, initialLikesCount = 0, initialLiked = false, size = "sm" }) {
-  const { user } = useAuth();
+  const { user, socket } = useAuth();
   const navigate = useNavigate();
   const [liked, setLiked] = useState(initialLiked);
   const [count, setCount] = useState(initialLikesCount);
   const [loading, setLoading] = useState(false);
+
+  // Real-time — koi bhi is post ko like/unlike kare (khud ya koi doosra
+  // viewer), sabka count turant sync ho jata hai
+  useEffect(() => {
+    if (!socket || !postId) return;
+
+    const handleLikeUpdate = (payload) => {
+      if (payload.postId === postId) {
+        setCount(payload.likesCount);
+      }
+    };
+
+    socket.on("post:likeUpdate", handleLikeUpdate);
+    return () => socket.off("post:likeUpdate", handleLikeUpdate);
+  }, [socket, postId]);
 
   const handleClick = async () => {
     if (!user) {

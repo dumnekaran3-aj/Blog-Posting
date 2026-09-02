@@ -103,7 +103,7 @@ function CommentItem({ comment, postId, onCommentAdded, onCommentDeleted, depth 
 }
 
 export default function CommentThread({ postId }) {
-  const { user } = useAuth();
+  const { user, socket } = useAuth();
   const navigate = useNavigate();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
@@ -123,6 +123,12 @@ export default function CommentThread({ postId }) {
     };
     fetchComments();
   }, [postId]);
+
+  // Existing tree mein kahin bhi ye id maujood hai kya — apne khud ke post
+  // kiye comment ko socket echo se DOBARA add hone se rokne ke liye zaroori
+  // hai (hum already API response se locally add kar chuke hote hain)
+  const commentExistsInTree = (list, id) =>
+    list.some((c) => c._id === id || commentExistsInTree(c.replies || [], id));
 
   // Inserts a new top-level comment, or nests a reply under its parent —
   // avoids re-fetching the whole thread after every post
@@ -149,6 +155,41 @@ export default function CommentThread({ postId }) {
         .map((c) => ({ ...c, replies: removeComment(c.replies || []) }));
     setComments((prev) => removeComment(prev));
   };
+
+  // Real-time — koi doosra viewer comment/reply kare to sabko turant dikhe,
+  // bina page refresh kiye
+  useEffect(() => {
+    if (!socket || !postId) return;
+
+    const handleNewComment = ({ comment, parentComment }) => {
+      setComments((prev) => {
+        if (commentExistsInTree(prev, comment._id)) return prev; // apna khud ka comment, already added
+        const withReplies = { ...comment, replies: [] };
+        if (!parentComment) return [...prev, withReplies];
+
+        const insertReply = (list) =>
+          list.map((c) => {
+            if (c._id === parentComment) {
+              return { ...c, replies: [...(c.replies || []), withReplies] };
+            }
+            return { ...c, replies: insertReply(c.replies || []) };
+          });
+        return insertReply(prev);
+      });
+    };
+
+    const handleCommentDeletedEvent = ({ commentId }) => {
+      handleCommentDeleted(commentId); // idempotent — khud delete kiya ho to already hat chuka hoga
+    };
+
+    socket.on("post:newComment", handleNewComment);
+    socket.on("post:commentDeleted", handleCommentDeletedEvent);
+
+    return () => {
+      socket.off("post:newComment", handleNewComment);
+      socket.off("post:commentDeleted", handleCommentDeletedEvent);
+    };
+  }, [socket, postId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

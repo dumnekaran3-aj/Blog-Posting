@@ -19,7 +19,7 @@ export default function Settings() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState(null); // { type: 'success'|'error', text }
 
-  useEffect(() => {
+  useEffect(() => {  
     setName(user?.name || "");
     setSelectedInterests(user?.interests || []);
   }, [user]);

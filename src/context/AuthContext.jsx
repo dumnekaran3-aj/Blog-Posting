@@ -1,17 +1,21 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import api from "../services/api";
+import { connectSocket, disconnectSocket } from "../services/socket";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [socket, setSocket] = useState(null); // consumers re-render when this changes (e.g. NotificationBell)
 
   useEffect(() => {
     // Page reload hone pe bhi login state bani rahe, isliye localStorage se restore karte hain
     const storedUser = localStorage.getItem("user");
+    const token = localStorage.getItem("token");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
+      if (token) setSocket(connectSocket(token));
     }
     setLoading(false);
   }, []);
@@ -31,6 +35,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem("token", data.token);
     localStorage.setItem("user", JSON.stringify(data.user));
     setUser(data.user);
+    setSocket(connectSocket(data.token)); // real-time notifications/likes/comments turant shuru
     return data;
   };
 
@@ -52,12 +57,14 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    disconnectSocket();
+    setSocket(null);
     setUser(null);
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, signup, verifyOtp, login, updateProfile, changePassword, logout }}
+      value={{ user, loading, socket, signup, verifyOtp, login, updateProfile, changePassword, logout }}
     >
       {children}
     </AuthContext.Provider>

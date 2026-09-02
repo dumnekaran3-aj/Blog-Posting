@@ -11,7 +11,7 @@ import api from "../services/api";
 
 export default function BlogDetail() {
   const { slug } = useParams();
-  const { user } = useAuth();
+  const { user, socket } = useAuth();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -31,6 +31,16 @@ export default function BlogDetail() {
     };
     fetchPost();
   }, [slug]);
+
+  // Is post ke "room" mein join karo — LikeButton aur CommentThread dono
+  // isi shared socket se 'post:likeUpdate'/'post:newComment' events sunte
+  // hain, join yahan page-level pe ek hi baar hota hai
+  useEffect(() => {
+    if (!socket || !post?._id) return;
+
+    socket.emit("post:join", post._id);
+    return () => socket.emit("post:leave", post._id);
+  }, [socket, post?._id]);
 
   // ---- Time-on-page tracking (feeds the "timeImpression" ranking signal) ----
   // Backend har user ke liye is post ka duration EXACTLY EK BAAR EVER count

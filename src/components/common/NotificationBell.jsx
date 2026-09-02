@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Bell, Heart, MessageCircle, UserPlus, CornerDownRight, Rss } from "lucide-react";
 import api from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
 const typeIcon = {
   follow: { Icon: UserPlus, color: "text-primary" },
@@ -20,14 +21,16 @@ const typeText = {
 };
 
 export default function NotificationBell() {
+  const { socket } = useAuth();
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const wrapperRef = useRef(null);
 
-  // Poll unread count every 30s — simple and good enough at this scale;
-  // real-time push (sockets) can replace this later if needed
+  // Poll unread count every 30s — real-time push (socket, neeche) usually
+  // isse pehle hi update kar deta hai, ye sirf ek safety-net fallback hai
+  // (agar kabhi socket disconnect ho jaye ya event miss ho jaye)
   useEffect(() => {
     const fetchCount = async () => {
       try {
@@ -41,6 +44,34 @@ export default function NotificationBell() {
     const interval = setInterval(fetchCount, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // Real-time — naya follow/comment/reply/new-post turant bell mein aa jata
+  // hai, 30s polling ka intezaar nahi karna padta
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewNotification = (notif) => {
+      setNotifications((prev) => {
+        // Dropdown pehle kabhi khula na ho to list khali hi hai — usmein
+        // kuch prepend karne ki zaroorat nahi, unread-count event se badge
+        // already update ho jayega. Sirf tab prepend karo jab list load ho chuki ho.
+        if (prev.length === 0) return prev;
+        return [notif, ...prev];
+      });
+    };
+
+    const handleUnreadCount = (count) => {
+      setUnreadCount(count);
+    };
+
+    socket.on("notification:new", handleNewNotification);
+    socket.on("notification:unread-count", handleUnreadCount);
+
+    return () => {
+      socket.off("notification:new", handleNewNotification);
+      socket.off("notification:unread-count", handleUnreadCount);
+    };
+  }, [socket]);
 
   // Close dropdown on outside click
   useEffect(() => {
