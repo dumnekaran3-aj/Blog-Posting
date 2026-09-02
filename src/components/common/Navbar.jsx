@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Search, Menu, PenSquare, LogOut, ChevronDown } from "lucide-react";
+import { Search, X, Menu, PenSquare, LogOut, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { primaryCategories, moreCategories, categorySlug } from "../../constants/categories";
@@ -8,12 +8,22 @@ import NotificationBell from "./NotificationBell";
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const trimmed = searchQuery.trim();
+    navigate(trimmed ? `/?search=${encodeURIComponent(trimmed)}` : "/");
+    setSearchOpen(false);
+    setSearchQuery("");
   };
 
   return (
@@ -76,9 +86,39 @@ export default function Navbar() {
             )}
           </div>
 
-          <button aria-label="Search" className="text-white/80 hover:text-white">
-            <Search size={16} />
-          </button>
+          {searchOpen ? (
+            <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5 bg-white/10 rounded-md px-2 py-1">
+              <Search size={14} className="text-white/70 shrink-0" />
+              <input
+                autoFocus
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onBlur={() => !searchQuery && setSearchOpen(false)}
+                placeholder="Search posts..."
+                className="bg-transparent text-sm text-white placeholder:text-white/50 outline-none w-36"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchOpen(false);
+                  setSearchQuery("");
+                }}
+                aria-label="Close search"
+                className="text-white/70 hover:text-white shrink-0"
+              >
+                <X size={14} />
+              </button>
+            </form>
+          ) : (
+            <button
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search"
+              className="text-white/80 hover:text-white"
+            >
+              <Search size={16} />
+            </button>
+          )}
 
           {user ? (
             <>

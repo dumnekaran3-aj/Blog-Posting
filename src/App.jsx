@@ -5,11 +5,14 @@ import { ADMIN_PATH } from "./constants/adminPath";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Signup from "./pages/Signup";
 import BlogDetail from "./pages/BlogDetail";
 import CreatePost from "./pages/CreatePost";
 import PrivateRoute from "./routes/PrivateRoute";
 import Dashboard from "./pages/Dashboard";
+import Notifications from "./pages/Notifications";
 import EditPost from "./pages/EditPost";
 import Categories from "./pages/Categories";
 import CategoryPosts from "./pages/CategoryPosts";
@@ -70,6 +73,14 @@ function App() {
               }
             />
             <Route
+              path="/notifications"
+              element={
+                <PrivateRoute>
+                  <Notifications />
+                </PrivateRoute>
+              }
+            />
+            <Route
               path="/edit/:id"
               element={
                 <PrivateRoute>
@@ -82,6 +93,8 @@ function App() {
 
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/blog/:slug" element={<BlogDetail />} />
 

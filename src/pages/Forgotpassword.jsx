@@ -4,11 +4,11 @@ import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import { useAuth } from "../context/AuthContext";
 
-export default function Login() {
-  const { login } = useAuth();
+export default function ForgotPassword() {
+  const { forgotPassword } = useAuth();
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -17,10 +17,12 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      await login(form);
-      navigate("/"); // login ke baad home pe bhej do
+      await forgotPassword({ email });
+      // Move straight to the reset step, carrying the email along so the
+      // user doesn't have to retype it.
+      navigate("/reset-password", { state: { email } });
     } catch (err) {
-      setError(err.response?.data?.msg || "Invalid email or password");
+      setError(err.response?.data?.msg || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -32,8 +34,10 @@ export default function Login() {
 
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm bg-white border border-borderClr rounded-xl p-6">
-          <h1 className="text-lg font-medium text-textDark mb-1">Welcome back</h1>
-          <p className="text-xs text-textMuted mb-6">Sign in to continue to Blogpost</p>
+          <h1 className="text-lg font-medium text-textDark mb-1">Forgot password?</h1>
+          <p className="text-xs text-textMuted mb-6">
+            Enter your account email — we'll send a 6-digit code to reset your password.
+          </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <div>
@@ -41,26 +45,10 @@ export default function Login() {
               <input
                 type="email"
                 required
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full text-sm border border-borderClr rounded-md px-3 py-2 outline-none focus:border-primary"
                 placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs text-textMuted block">Password</label>
-                <Link to="/forgot-password" className="text-[11px] text-primary hover:underline">
-                  Forgot password?
-                </Link>
-              </div>
-              <input
-                type="password"
-                required
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full text-sm border border-borderClr rounded-md px-3 py-2 outline-none focus:border-primary"
-                placeholder="Your password"
               />
             </div>
 
@@ -71,14 +59,14 @@ export default function Login() {
               disabled={loading}
               className="bg-primary text-white text-sm py-2 rounded-md mt-2 hover:bg-primary/90 disabled:opacity-60"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Sending code..." : "Send reset code"}
             </button>
           </form>
 
           <p className="text-xs text-textMuted mt-4 text-center">
-            Don't have an account?{" "}
-            <Link to="/signup" className="text-primary">
-              Sign up
+            Remembered your password?{" "}
+            <Link to="/login" className="text-primary">
+              Sign in
             </Link>
           </p>
         </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Search } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
@@ -9,11 +10,14 @@ import api from "../services/api";
 const categories = ["Marketing", "Design", "Tech", "Lifestyle"];
 
 export default function Home() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState(null);
-  const [searchInput, setSearchInput] = useState(""); // raw typed value, updates instantly
-  const [search, setSearch] = useState(""); // debounced value, actually triggers the API call
+  // Navbar search button lands here with ?search=<query> — pick that up as
+  // the initial value so results show immediately instead of an empty box.
+  const [searchInput, setSearchInput] = useState(searchParams.get("search") || "");
+  const [search, setSearch] = useState(searchParams.get("search") || "");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -23,6 +27,14 @@ export default function Home() {
     const timer = setTimeout(() => setSearch(searchInput.trim()), 400);
     return () => clearTimeout(timer);
   }, [searchInput]);
+
+  // Keep the URL in sync with the active search — makes the search
+  // shareable/bookmarkable and is what lets the navbar search button
+  // (which navigates to /?search=...) hand off into this page correctly.
+  useEffect(() => {
+    setSearchParams(search ? { search } : {}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
   // Filter (category/search) badalte hi page 1 pe wapas — warna user kisi
   // filter change ke baad bhi purane page number pe atka reh sakta hai jahan

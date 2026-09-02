@@ -187,6 +187,14 @@ export default function NotificationBell() {
                 </Link>
               );
             })}
+
+          <Link
+            to="/notifications"
+            onClick={() => setOpen(false)}
+            className="block text-center text-[11px] text-primary hover:underline px-4 py-2.5 border-t border-borderClr"
+          >
+            View all notifications
+          </Link>
         </div>
       )}
     </div>
