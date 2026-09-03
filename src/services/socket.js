@@ -13,15 +13,19 @@ const getOrigin = () => {
 // connectSocket
 // ---------------
 // Login hote hi (ya page reload pe agar already logged in ho) call hota hai.
-// Same token se already connected ho to naya connection nahi banate.
-export const connectSocket = (token) => {
-  if (!token) return null;
-  if (socket?.connected && socket.auth?.token === token) return socket;
+// No token argument needed — the httpOnly 'token' cookie goes automatically
+// with the handshake (withCredentials: true), same as every REST call via
+// api.js. Previously this required an explicit token argument that nothing
+// in the app ever actually passed (the JWT is httpOnly, unreadable by JS by
+// design), so every connection attempt silently no-op'd and real-time
+// features never worked at all.
+export const connectSocket = () => {
+  if (socket?.connected) return socket;
 
   if (socket) socket.disconnect();
 
   socket = ioClient(getOrigin(), {
-    auth: { token },
+    withCredentials: true,
     transports: ["websocket"],
   });
 

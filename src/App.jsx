@@ -5,8 +5,8 @@ import { ADMIN_PATH } from "./constants/adminPath";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
+import ForgotPassword from "./pages/Forgotpassword";
+import ResetPassword from "./pages/Resetpassword";
 import Signup from "./pages/Signup";
 import BlogDetail from "./pages/BlogDetail";
 import CreatePost from "./pages/CreatePost";
