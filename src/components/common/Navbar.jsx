@@ -128,7 +128,6 @@ export default function Navbar() {
               >
                 <PenSquare size={14} /> Write
               </Link>
-              <NotificationBell />
               <Link to="/dashboard" className="text-white/80 text-sm hover:text-white">
                 {user.name}
               </Link>
@@ -150,13 +149,27 @@ export default function Navbar() {
           )}
         </div>
 
-        <button
-          className="md:hidden text-white"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle menu"
-        >
-          <Menu size={22} />
-        </button>
+        {/* Notification bell — always rendered ONCE here (both mobile and
+            desktop), never duplicated inside the collapsible hamburger
+            menu. That duplicate instance was the actual bug: its dropdown
+            (`right-0`, fixed width) was anchored to a narrow icon sitting
+            near the LEFT edge of the mobile menu, so on small Android
+            screens the dropdown rendered mostly off-screen to the left —
+            it wasn't actually "hiding", it just opened outside the
+            visible viewport. A single instance here, next to the
+            hamburger button on the right, keeps it on-screen at every
+            width. */}
+        <div className="flex items-center gap-3">
+          {user && <NotificationBell />}
+
+          <button
+            className="md:hidden text-white"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+          >
+            <Menu size={22} />
+          </button>
+        </div>
       </nav>
 
       {menuOpen && (
@@ -172,10 +185,6 @@ export default function Navbar() {
               <Link to="/create" className="text-sm text-white" onClick={() => setMenuOpen(false)}>
                 Write
               </Link>
-              <div className="flex items-center gap-2">
-                <NotificationBell />
-                <span className="text-sm text-white">Notifications</span>
-              </div>
               <Link to="/dashboard" className="text-sm text-white" onClick={() => setMenuOpen(false)}>
                 {user.name}
               </Link>

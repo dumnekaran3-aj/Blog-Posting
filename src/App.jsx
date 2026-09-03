@@ -18,6 +18,7 @@ import Categories from "./pages/Categories";
 import CategoryPosts from "./pages/CategoryPosts";
 import PublicProfile from "./pages/PublicProfile";
 import Settings from  "./pages/Settings";
+import ScrollToTop from "./components/common/ScrollToTop";
 
 import AboutUs from "./pages/legal/AboutUs";
 import ContactUs from "./pages/legal/ContactUs";
@@ -44,6 +45,7 @@ function App() {
     <AuthProvider>
       <AdminAuthProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
 
             <Route path="/about" element={<AboutUs />} />
