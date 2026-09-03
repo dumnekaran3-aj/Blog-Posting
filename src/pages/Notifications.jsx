@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bell, Heart, MessageCircle, UserPlus, CornerDownRight, Rss } from "lucide-react";
+import { Heart, MessageCircle, UserPlus, CornerDownRight, Rss, Bell } from "lucide-react";
+import Navbar from "../components/common/Navbar";
+import Footer from "../components/common/Footer";
 import api from "../services/api";
-import { useAuth } from "../context/AuthContext";
 
 const typeIcon = {
   follow: { Icon: UserPlus, color: "text-primary" },
@@ -20,149 +21,70 @@ const typeText = {
   new_post: "published a new post",
 };
 
-export default function NotificationBell() {
-  const { socket } = useAuth();
-  const [open, setOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const wrapperRef = useRef(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  // Poll unread count every 30s — real-time push (socket, neeche) usually
-  // isse pehle hi update kar deta hai, ye sirf ek safety-net fallback hai
-  // (agar kabhi socket disconnect ho jaye ya event miss ho jaye)
+  const fetchPage = async (pageNum) => {
+    const { data } = await api.get(`/notifications?page=${pageNum}`);
+    setTotalPages(data.totalPages || 1);
+    return data.notifications || [];
+  };
+
   useEffect(() => {
-    const fetchCount = async () => {
-      try {
-        const { data } = await api.get("/notifications/unread-count");
-        setUnreadCount(data.count);
-      } catch (err) {
-        // fail silently — badge just won't update this cycle
-      }
-    };
-    fetchCount();
-    const interval = setInterval(fetchCount, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Real-time — naya follow/comment/reply/new-post turant bell mein aa jata
-  // hai, 30s polling ka intezaar nahi karna padta
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleNewNotification = (notif) => {
-      setNotifications((prev) => {
-        // Dropdown pehle kabhi khula na ho to list khali hi hai — usmein
-        // kuch prepend karne ki zaroorat nahi, unread-count event se badge
-        // already update ho jayega. Sirf tab prepend karo jab list load ho chuki ho.
-        if (prev.length === 0) return prev;
-        return [notif, ...prev];
-      });
-    };
-
-    const handleUnreadCount = (count) => {
-      setUnreadCount(count);
-    };
-
-    socket.on("notification:new", handleNewNotification);
-    socket.on("notification:unread-count", handleUnreadCount);
-
-    return () => {
-      socket.off("notification:new", handleNewNotification);
-      socket.off("notification:unread-count", handleUnreadCount);
-    };
-  }, [socket]);
-
-  // Close dropdown on outside click/tap. Both mousedown AND touchstart are
-  // registered — Android Chrome's touch-to-mouse-event translation isn't
-  // always reliable, so relying on mousedown alone occasionally misses the
-  // very tap that should close this.
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside, { passive: true });
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
-    };
-  }, []);
-
-  const handleOpen = async () => {
-    const willOpen = !open;
-    setOpen(willOpen);
-    if (willOpen && notifications.length === 0) {
+    (async () => {
       setLoading(true);
       try {
-        const { data } = await api.get("/notifications");
-        setNotifications(data.notifications);
+        const notifs = await fetchPage(1);
+        setNotifications(notifs);
+        setPage(1);
       } catch (err) {
         // leave list empty on failure
       } finally {
         setLoading(false);
       }
-    }
-  };
+    })();
 
-  const handleMarkAllRead = async () => {
+    // Opening this page is a natural "I've seen my notifications" signal
+    api.patch("/notifications/read-all").catch(() => {});
+  }, []);
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
     try {
-      await api.patch("/notifications/read-all");
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-      setUnreadCount(0);
+      const nextPage = page + 1;
+      const notifs = await fetchPage(nextPage);
+      setNotifications((prev) => [...prev, ...notifs]);
+      setPage(nextPage);
     } catch (err) {
       // could add a toast here later
+    } finally {
+      setLoadingMore(false);
     }
-  };
-
-  const handleClickNotification = async (notif) => {
-    if (!notif.read) {
-      try {
-        await api.patch(`/notifications/${notif._id}/read`);
-        setNotifications((prev) => prev.map((n) => (n._id === notif._id ? { ...n, read: true } : n)));
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      } catch (err) {
-        // navigation still proceeds even if marking-as-read fails
-      }
-    }
-    setOpen(false);
   };
 
   return (
-    <div className="relative" ref={wrapperRef}>
-      <button
-        onClick={handleOpen}
-        className="relative text-white/80 hover:text-white"
-        aria-label="Notifications"
-      >
-        <Bell size={16} />
-        {unreadCount > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
-      </button>
+    <div className="min-h-screen flex flex-col bg-bgLight">
+      <Navbar />
 
-      {open && (
-        <div className="absolute top-full right-0 mt-2 bg-white border border-borderClr rounded-lg shadow-lg w-80 max-w-[calc(100vw-2rem)] max-h-96 overflow-y-auto z-50">
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-borderClr">
-            <p className="text-xs font-medium text-textDark">Notifications</p>
-            {unreadCount > 0 && (
-              <button onClick={handleMarkAllRead} className="text-[11px] text-primary hover:underline">
-                Mark all as read
-              </button>
-            )}
+      <div className="flex-1 max-w-2xl mx-auto w-full px-6 py-10">
+        <h1 className="text-lg font-medium text-textDark mb-6">Notifications</h1>
+
+        {loading && <p className="text-sm text-textMuted">Loading notifications...</p>}
+
+        {!loading && notifications.length === 0 && (
+          <div className="bg-white border border-borderClr rounded-xl p-10 text-center">
+            <Bell size={28} className="text-textMuted mx-auto mb-2" />
+            <p className="text-sm text-textMuted">No notifications yet.</p>
           </div>
+        )}
 
-          {loading && <p className="text-xs text-textMuted p-4">Loading...</p>}
-          {!loading && notifications.length === 0 && (
-            <p className="text-xs text-textMuted p-4">No notifications yet.</p>
-          )}
-
-          {!loading &&
-            notifications.map((notif) => {
+        {!loading && notifications.length > 0 && (
+          <div className="bg-white border border-borderClr rounded-xl overflow-hidden">
+            {notifications.map((notif) => {
               const { Icon, color } = typeIcon[notif.type] || typeIcon.like;
               const linkTo = notif.post?.slug ? `/blog/${notif.post.slug}` : `/profile/${notif.sender?._id}`;
 
@@ -170,40 +92,48 @@ export default function NotificationBell() {
                 <Link
                   key={notif._id}
                   to={linkTo}
-                  onClick={() => handleClickNotification(notif)}
-                  className={`flex items-start gap-2.5 px-4 py-3 border-b border-borderClr last:border-0 hover:bg-bgLight ${
+                  className={`flex items-start gap-3 px-4 py-3.5 border-b border-borderClr last:border-0 hover:bg-bgLight ${
                     !notif.read ? "bg-primary/5" : ""
                   }`}
                 >
                   <div className={`mt-0.5 ${color}`}>
-                    <Icon size={14} />
+                    <Icon size={16} />
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs text-textDark">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-textDark">
                       <span className="font-medium">{notif.sender?.name || "Someone"}</span>{" "}
                       {typeText[notif.type] || "interacted with you"}
                     </p>
                     {notif.post?.title && (
-                      <p className="text-[11px] text-textMuted truncate">{notif.post.title}</p>
+                      <p className="text-xs text-textMuted truncate">{notif.post.title}</p>
                     )}
-                    <p className="text-[10px] text-textMuted mt-0.5">
-                      {new Date(notif.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                    <p className="text-[11px] text-textMuted mt-0.5">
+                      {new Date(notif.createdAt).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
                     </p>
                   </div>
-                  {!notif.read && <span className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />}
+                  {!notif.read && <span className="w-2 h-2 rounded-full bg-accent mt-1.5 shrink-0" />}
                 </Link>
               );
             })}
+          </div>
+        )}
 
-          <Link
-            to="/notifications"
-            onClick={() => setOpen(false)}
-            className="block text-center text-[11px] text-primary hover:underline px-4 py-2.5 border-t border-borderClr"
+        {!loading && page < totalPages && (
+          <button
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            className="mt-4 w-full text-sm text-primary border border-borderClr rounded-lg py-2.5 hover:border-primary/40 disabled:opacity-60"
           >
-            View all notifications
-          </Link>
-        </div>
-      )}
+            {loadingMore ? "Loading..." : "Load more"}
+          </button>
+        )}
+      </div>
+
+      <Footer />
     </div>
   );
 }

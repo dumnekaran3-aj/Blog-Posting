@@ -82,15 +82,17 @@ export default function Home() {
       </section>
 
       <section className="max-w-6xl mx-auto w-full px-6 pb-10 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-6">
-        {/* Post grid */}
+        {/* Post feed — single column, full width. Ek post ke niche doosri
+            post aati hai (pehle 2-column grid tha, ab har post apni poori
+            available width leti hai — jo pehle 2 posts milke leti thi) */}
         <div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-6">
             {loading && (
-              <p className="text-sm text-textMuted col-span-2">Loading posts...</p>
+              <p className="text-sm text-textMuted">Loading posts...</p>
             )}
 
             {!loading && posts.length === 0 && (
-              <p className="text-sm text-textMuted col-span-2">
+              <p className="text-sm text-textMuted">
                 {search || activeCategory
                   ? "No posts match your search."
                   : "No posts yet. Be the first to publish one."}

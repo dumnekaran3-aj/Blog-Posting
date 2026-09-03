@@ -4,6 +4,7 @@ import { MessageCircle, Eye, PlayCircle, Headphones } from "lucide-react";
 import LikeButton from "./LikeButton";
 import ShareButton from "./ShareButton";
 import Lightbox from "../common/Lightbox";
+import linkify from "../../utils/linkify";
 
 const categoryStyles = {
   default: "bg-textMuted/10 text-textMuted",
@@ -81,9 +82,12 @@ export default function PostCard({ post }) {
           </span>
         </div>
 
-        {/* ---- Title — bold, larger, clickable → opens the full post ---- */}
+        {/* ---- Title — bold, larger, clickable → opens the full post ----
+              min-h ensures the title's own space never visually collapses/
+              gets lost against whatever comes right after it (media, or the
+              action row on text-only posts). ---- */}
         <Link to={`/blog/${slug}`}>
-          <h3 className="text-lg font-bold text-textDark px-3 pt-1 pb-2 leading-snug line-clamp-2 hover:text-primary">
+          <h3 className="text-lg font-bold text-textDark px-3 pt-1 pb-2 leading-snug line-clamp-2 min-h-[3.25rem] hover:text-primary">
             {title}
           </h3>
         </Link>
@@ -175,15 +179,16 @@ export default function PostCard({ post }) {
           </div>
         </div>
 
-        {/* ---- Text preview — bold, clamped, with Show more/less toggle ---- */}
+        {/* ---- Text preview — bold, clamped, with Show more/less toggle,
+              URLs inside auto-linked ---- */}
         {trimmedContent && (
           <div className="px-3 py-2.5">
             <p
-              className={`text-sm font-semibold text-textDark whitespace-pre-line ${
+              className={`text-sm font-bold text-textDark whitespace-pre-line ${
                 expanded ? "" : "line-clamp-3"
               }`}
             >
-              {trimmedContent}
+              {linkify(trimmedContent)}
             </p>
             {isLong && (
               <button

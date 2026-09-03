@@ -8,6 +8,7 @@ import ShareButton from "../components/blog/ShareButton";
 import CommentThread from "../components/blog/CommentThread";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
+import linkify from "../utils/linkify";
 
 export default function BlogDetail() {
   const { slug } = useParams();
@@ -195,7 +196,7 @@ export default function BlogDetail() {
             {renderMedia()}
 
             <div className="text-sm text-textDark leading-relaxed whitespace-pre-wrap mb-6">
-              {post.content}
+              {linkify(post.content)}
             </div>
 
             <div className="flex items-center gap-5 border-t border-b border-borderClr py-3">
