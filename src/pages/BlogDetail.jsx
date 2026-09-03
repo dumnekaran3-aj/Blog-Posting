@@ -67,18 +67,20 @@ export default function BlogDetail() {
 
       alreadySent = true;
 
-      // sendBeacon custom Authorization header allow nahi karta, aur ye route
-      // protected hai — isliye fetch + keepalive use kar rahe hain, jo tab
-      // band hote waqt bhi request complete hone deta hai (regular axios/XHR
-      // us case mein reliably kaam nahi karta).
-      const token = localStorage.getItem("token");
+      // sendBeacon custom headers allow nahi karta, aur ye route protected
+      // hai — isliye fetch + keepalive use kar rahe hain, jo tab band hote
+      // waqt bhi request complete hone deta hai (regular axios/XHR us case
+      // mein reliably kaam nahi karta). Auth ab httpOnly cookie se hoti hai,
+      // isliye credentials:'include' zaroori hai (cookie manually attach
+      // nahi kar sakte, JS use padh hi nahi sakti).
       const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
       fetch(`${baseURL}/posts/${post._id}/view-duration`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          "X-Requested-With": "XMLHttpRequest", // required by backend CSRF check
         },
         body: JSON.stringify({ duration: totalSeconds }),
         keepalive: true,

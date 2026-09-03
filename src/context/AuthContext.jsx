@@ -9,15 +9,34 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null); // consumers re-render when this changes (e.g. NotificationBell)
 
-  useEffect(() => {
-    // Page reload hone pe bhi login state bani rahe, isliye localStorage se restore karte hain
-    const storedUser = localStorage.getItem("user");
-    const token = localStorage.getItem("token");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      if (token) setSocket(connectSocket(token));
+  // On every app load, ASK THE SERVER if the session cookie is still
+  // valid — never trust anything stored client-side. The JWT lives in an
+  // httpOnly cookie now (JS can't read it to check), so this is the only
+  // way to know whether the user is actually logged in.
+  const checkSession = async () => {
+    try {
+      const { data } = await api.get("/auth/me");
+      setUser(data.user);
+      setSocket(connectSocket()); // cookie goes automatically with the socket handshake
+    } catch (err) {
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  useEffect(() => {
+    checkSession();
+
+    // If any API call anywhere in the app gets a 401 mid-session (cookie
+    // expired while browsing), snap back to logged-out immediately.
+    const handleExpired = () => {
+      setUser(null);
+      disconnectSocket();
+      setSocket(null);
+    };
+    window.addEventListener("user-session-expired", handleExpired);
+    return () => window.removeEventListener("user-session-expired", handleExpired);
   }, []);
 
   const signup = async ({ name, email, password }) => {
@@ -31,17 +50,15 @@ export function AuthProvider({ children }) {
   };
 
   const login = async ({ email, password }) => {
+    // Server sets the httpOnly cookie via Set-Cookie — nothing to store here manually
     const { data } = await api.post("/auth/signin", { email, password });
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
     setUser(data.user);
-    setSocket(connectSocket(data.token)); // real-time notifications/likes/comments turant shuru
+    setSocket(connectSocket()); // real-time notifications/likes/comments turant shuru
     return data;
   };
 
   const updateProfile = async (payload) => {
     const { data } = await api.put("/auth/profile", payload);
-    localStorage.setItem("user", JSON.stringify(data.user));
     setUser(data.user);
     return data;
   };
@@ -64,9 +81,12 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  const logout = async () => {
+    try {
+      await api.post("/auth/signout"); // clears the httpOnly cookie server-side
+    } catch (err) {
+      // even if the network call fails, clear local state so the UI doesn't get stuck
+    }
     disconnectSocket();
     setSocket(null);
     setUser(null);

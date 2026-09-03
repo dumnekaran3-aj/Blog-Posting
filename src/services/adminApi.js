@@ -3,6 +3,10 @@ import axios from "axios";
 const adminApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
   withCredentials: true, // REQUIRED — sends the httpOnly cookie with every request
+  headers: {
+    // Required by the backend's CSRF protection (middleware/csrfProtection.js).
+    "X-Requested-With": "XMLHttpRequest",
+  },
 });
 
 // No Authorization header interceptor anymore — there is no token in JS
