@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Search } from "lucide-react";
+import { useSearchParams, Link } from "react-router-dom";
+import { Search, Sparkles } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import PostCard from "../components/blog/PostCart";
 import Pagination from "../components/common/Pagination";
+import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
 const categories = ["Marketing", "Design", "Tech", "Lifestyle"];
 
 export default function Home() {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +22,7 @@ export default function Home() {
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [suggestedPosts, setSuggestedPosts] = useState([]);
 
   // Debounce — waits 400ms after the user stops typing before updating `search`.
   // Avoids firing an API call on every single keystroke.
@@ -62,6 +65,47 @@ export default function Home() {
     };
     fetchPosts();
   }, [activeCategory, search, page]);
+
+  // "Popular categories" ke neeche jo empty space tha, wahan user ke apne
+  // interests (Settings/Dashboard mein set kiye hue) ke hisaab se suggested
+  // posts dikhate hain — chhoti list, direct click se seedha post khulta
+  // hai, koi "Show more" nahi (bas ek quick discovery list hai).
+  useEffect(() => {
+    const interests = user?.interests || [];
+    if (interests.length === 0) {
+      setSuggestedPosts([]);
+      return;
+    }
+
+    const fetchSuggestions = async () => {
+      try {
+        // Har interest se thode-thode posts le lete hain (max 3 categories
+        // taaki zyada parallel calls na ho), fir merge+dedupe karke top 5
+        // dikha dete hain — isse variety milti hai sirf ek category tak
+        // simit rehne ke bajaye
+        const requests = interests
+          .slice(0, 3)
+          .map((cat) => api.get("/posts", { params: { category: cat, limit: 3 } }));
+        const responses = await Promise.all(requests);
+
+        const seen = new Set();
+        const merged = [];
+        responses.forEach((res) => {
+          (res.data.posts || []).forEach((p) => {
+            if (!seen.has(p._id)) {
+              seen.add(p._id);
+              merged.push(p);
+            }
+          });
+        });
+
+        setSuggestedPosts(merged.slice(0, 5));
+      } catch (err) {
+        setSuggestedPosts([]);
+      }
+    };
+    fetchSuggestions();
+  }, [user?.id]);
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
@@ -143,6 +187,43 @@ export default function Home() {
               ))}
             </div>
           </div>
+
+          {/* Suggested posts — user ke interests ke hisaab se, direct click
+              se post khulta hai, koi excerpt/"Show more" nahi (quick discovery) */}
+          {suggestedPosts.length > 0 && (
+            <div className="bg-white border border-borderClr rounded-xl p-4">
+              <p className="flex items-center gap-1.5 text-xs font-medium text-textDark mb-3">
+                <Sparkles size={13} className="text-primary" /> Suggested for you
+              </p>
+              <div className="flex flex-col gap-3">
+                {suggestedPosts.map((post) => (
+                  <Link
+                    key={post._id}
+                    to={`/blog/${post.slug}`}
+                    className="flex items-center gap-2.5 group"
+                  >
+                    {post.thumbnail || post.mediaUrl ? (
+                      <img
+                        src={post.thumbnail || post.mediaUrl}
+                        alt={post.title}
+                        className="w-12 h-12 rounded-md object-cover shrink-0"
+                      />
+                    ) : (
+                      <span className="w-12 h-12 rounded-md bg-primary/10 text-primary flex items-center justify-center text-[10px] font-medium shrink-0">
+                        {post.category?.charAt(0).toUpperCase() || "P"}
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-xs text-textDark font-medium line-clamp-2 group-hover:text-primary">
+                        {post.title}
+                      </p>
+                      <p className="text-[10px] text-textMuted mt-0.5">{post.category}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </aside>
       </section>
 

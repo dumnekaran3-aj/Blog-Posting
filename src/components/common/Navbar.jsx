@@ -136,8 +136,22 @@ export default function Navbar() {
                 >
                   <PenSquare size={14} /> Write
                 </Link>
-                <Link to="/dashboard" className="text-white/80 text-sm hover:text-white">
-                  {user.name}
+                <Link
+                  to="/dashboard"
+                  className="flex items-center gap-2 text-white/90 hover:text-white"
+                >
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-7 h-7 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center text-[11px] font-medium">
+                      {user.name?.charAt(0).toUpperCase() || "U"}
+                    </span>
+                  )}
+                  <span className="text-sm font-bold">{user.name}</span>
                 </Link>
                 <button
                   onClick={handleLogout}
@@ -182,7 +196,18 @@ export default function Navbar() {
               <Link to="/create" className="text-sm text-white" onClick={() => setMenuOpen(false)}>
                 Write
               </Link>
-              <Link to="/dashboard" className="text-sm text-white" onClick={() => setMenuOpen(false)}>
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-2 text-sm font-bold text-white"
+                onClick={() => setMenuOpen(false)}
+              >
+                {user.avatar ? (
+                  <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
+                ) : (
+                  <span className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center text-[10px] font-medium">
+                    {user.name?.charAt(0).toUpperCase() || "U"}
+                  </span>
+                )}
                 {user.name}
               </Link>
               <button onClick={handleLogout} className="text-sm text-white/80 text-left">

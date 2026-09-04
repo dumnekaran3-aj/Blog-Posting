@@ -5,6 +5,7 @@ import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import PostCard from "../components/blog/PostCart";
 import FollowListModal from "../components/profile/FollowListModal";
+import Lightbox from "../components/common/Lightbox";
 import { useAuth } from "../context/AuthContext";
 import { categories as allCategories } from "../constants/categories";
 import api from "../services/api";
@@ -19,6 +20,7 @@ export default function PublicProfile() {
   const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
   const [followModalType, setFollowModalType] = useState(null);
+  const [avatarLightboxOpen, setAvatarLightboxOpen] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -88,17 +90,23 @@ export default function PublicProfile() {
             <div className="bg-white border border-borderClr rounded-xl p-6 mb-6">
               <div className="flex items-start justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-4">
-                  {profile.avatar ? (
-                    <img
-                      src={profile.avatar}
-                      alt={profile.name}
-                      className="w-16 h-16 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xl font-medium">
-                      {profile.name?.charAt(0).toUpperCase() || "U"}
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => profile.avatar && setAvatarLightboxOpen(true)}
+                    aria-label={`View ${profile.name}'s profile photo`}
+                  >
+                    {profile.avatar ? (
+                      <img
+                        src={profile.avatar}
+                        alt={profile.name}
+                        className="w-16 h-16 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xl font-medium">
+                        {profile.name?.charAt(0).toUpperCase() || "U"}
+                      </div>
+                    )}
+                  </button>
                   <div>
                     <p className="text-lg font-medium text-textDark">{profile.name}</p>
                     {profile.bio && <p className="text-xs text-textMuted mt-1 max-w-sm">{profile.bio}</p>}
@@ -168,7 +176,9 @@ export default function PublicProfile() {
             {posts.length === 0 ? (
               <p className="text-sm text-textMuted">No published posts yet.</p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              // Home page jaisa hi single-column, full-width layout — same
+              // PostCard component, same stacking (2/3-column grid nahi)
+              <div className="flex flex-col gap-6">
                 {posts.map((post) => (
                   <PostCard key={post._id} post={post} />
                 ))}
@@ -177,6 +187,10 @@ export default function PublicProfile() {
           </>
         )}
       </div>
+
+      {avatarLightboxOpen && (
+        <Lightbox src={profile?.avatar} alt={profile?.name} onClose={() => setAvatarLightboxOpen(false)} />
+      )}
 
       {followModalType && (
         <FollowListModal userId={id} type={followModalType} onClose={() => setFollowModalType(null)} />

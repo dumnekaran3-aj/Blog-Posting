@@ -6,6 +6,7 @@ import Footer from "../components/common/Footer";
 import LikeButton from "../components/blog/LikeButton";
 import ShareButton from "../components/blog/ShareButton";
 import CommentThread from "../components/blog/CommentThread";
+import Lightbox from "../components/common/Lightbox";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import linkify from "../utils/linkify";
@@ -16,6 +17,7 @@ export default function BlogDetail() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [authorLightboxOpen, setAuthorLightboxOpen] = useState(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -169,7 +171,12 @@ export default function BlogDetail() {
             <h1 className="text-2xl font-medium text-textDark mt-3 mb-2">{post.title}</h1>
 
             <div className="flex items-center gap-2 text-xs text-textMuted mb-5">
-              <Link to={`/profile/${post.author?._id || post.author?.id}`} className="flex items-center gap-2 hover:text-primary">
+              {/* Avatar click => enlarge (Lightbox), naam click => profile */}
+              <button
+                type="button"
+                onClick={() => post.author?.avatar && setAuthorLightboxOpen(true)}
+                aria-label={`View ${post.author?.name || "user"}'s profile photo`}
+              >
                 {post.author?.avatar ? (
                   <img
                     src={post.author.avatar}
@@ -181,7 +188,16 @@ export default function BlogDetail() {
                     {post.author?.name?.charAt(0).toUpperCase() || "U"}
                   </span>
                 )}
-                <span>By {post.author?.name || "Unknown"}</span>
+              </button>
+              {authorLightboxOpen && (
+                <Lightbox
+                  src={post.author?.avatar}
+                  alt={post.author?.name}
+                  onClose={() => setAuthorLightboxOpen(false)}
+                />
+              )}
+              <Link to={`/profile/${post.author?._id || post.author?.id}`} className="hover:text-primary">
+                By {post.author?.name || "Unknown"}
               </Link>
               <span>&middot;</span>
               <span>

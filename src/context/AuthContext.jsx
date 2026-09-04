@@ -9,6 +9,16 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null); // consumers re-render when this changes (e.g. NotificationBell)
 
+  // unreadCount YAHAN AuthContext mein rehta hai, NotificationBell ke andar
+  // nahi — kyunki AuthProvider poori app ki lifetime mein sirf EK BAAR mount
+  // hota hai (App.jsx mein Router ke bahar), jabki Navbar (aur andar
+  // NotificationBell) HAR PAGE apna khud ka instance render karta hai, jo
+  // har navigation pe unmount+remount hota hai. Pehle unreadCount fetch +
+  // 30s polling NotificationBell ke andar tha, isliye har click/navigation
+  // pe ek NAYA fetch + naya interval start ho raha tha — yehi "har click pe
+  // API hit" wala bug tha. Ab ye sirf login hone par EK BAAR set hota hai.
+  const [unreadCount, setUnreadCount] = useState(0);
+
   // On every app load, ASK THE SERVER if the session cookie is still
   // valid — never trust anything stored client-side. The JWT lives in an
   // httpOnly cookie now (JS can't read it to check), so this is the only
@@ -38,6 +48,39 @@ export function AuthProvider({ children }) {
     window.addEventListener("user-session-expired", handleExpired);
     return () => window.removeEventListener("user-session-expired", handleExpired);
   }, []);
+
+  // Unread-count fetch + 30s poll — sirf EK BAAR set hota hai jab user
+  // login state badalta hai (login/logout), navigation pe NAHI (AuthProvider
+  // khud kabhi remount nahi hota, isliye ye effect bhi baar-baar nahi chalta)
+  useEffect(() => {
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const fetchCount = async () => {
+      try {
+        const { data } = await api.get("/notifications/unread-count");
+        setUnreadCount(data.count);
+      } catch (err) {
+        // fail silently — badge just won't update this cycle
+      }
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 30000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
+  // Real-time — naya follow/comment/reply/new-post turant badge update kar
+  // deta hai, 30s polling ka wait nahi karna padta. Ye bhi yahan hai (socket
+  // instance ki poori lifetime ke liye ek hi listener), Navbar ke baar-baar
+  // remount hone se dobara register nahi hota.
+  useEffect(() => {
+    if (!socket) return;
+    const handleUnreadCount = (count) => setUnreadCount(count);
+    socket.on("notification:unread-count", handleUnreadCount);
+    return () => socket.off("notification:unread-count", handleUnreadCount);
+  }, [socket]);
 
   const signup = async ({ name, email, password }) => {
     const { data } = await api.post("/auth/signup", { name, email, password });
@@ -94,7 +137,21 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, socket, signup, verifyOtp, login, updateProfile, changePassword, forgotPassword, resetPassword, logout }}
+      value={{
+        user,
+        loading,
+        socket,
+        unreadCount,
+        setUnreadCount,
+        signup,
+        verifyOtp,
+        login,
+        updateProfile,
+        changePassword,
+        forgotPassword,
+        resetPassword,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

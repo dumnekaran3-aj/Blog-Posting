@@ -4,6 +4,7 @@ import { Bell, BellOff, LogOut, Save, Eye, EyeOff, Check } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import AvatarUpload from "../components/profile/AvatarUpload";
+import Lightbox from "../components/common/Lightbox";
 import { categories } from "../constants/categories";
 import { useAuth } from "../context/AuthContext";
 
@@ -12,6 +13,7 @@ const MAX_INTERESTS = 4;
 export default function Settings() {
   const { user, updateProfile, changePassword, logout } = useAuth();
   const navigate = useNavigate();
+  const [avatarLightboxOpen, setAvatarLightboxOpen] = useState(false);
 
   // ---- Profile section state ----
   const [name, setName] = useState(user?.name || "");
@@ -142,7 +144,7 @@ export default function Settings() {
               name={user?.name}
               size={64}
               onUploaded={handleAvatarUploaded}
-              onClickImage={() => {}}
+              onClickImage={() => user?.avatar && setAvatarLightboxOpen(true)}
             />
             <p className="text-[11px] text-textMuted">
               Click the camera icon to change your profile picture.
@@ -320,6 +322,10 @@ export default function Settings() {
           <LogOut size={14} /> Log out
         </button>
       </div>
+
+      {avatarLightboxOpen && (
+        <Lightbox src={user?.avatar} alt={user?.name} onClose={() => setAvatarLightboxOpen(false)} />
+      )}
 
       <Footer />
     </div>

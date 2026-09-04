@@ -36,6 +36,7 @@ export default function PostCard({ post }) {
 
   const [expanded, setExpanded] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [authorLightboxOpen, setAuthorLightboxOpen] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
 
   const badgeClass = categoryStyles[category] || categoryStyles.default;
@@ -51,7 +52,14 @@ export default function PostCard({ post }) {
     <div>
       {/* ---- Author row — OUTSIDE the card, above it ---- */}
       <div className="flex items-center gap-2 mb-1.5 px-0.5">
-        <Link to={`/profile/${author?._id || author?.id}`} className="shrink-0">
+        {/* Avatar click => enlarge (Lightbox), NOT navigate — naam wala
+            link neeche navigate karta hai profile pe */}
+        <button
+          type="button"
+          onClick={() => author?.avatar && setAuthorLightboxOpen(true)}
+          className="shrink-0"
+          aria-label={`View ${author?.name || "user"}'s profile photo`}
+        >
           {author?.avatar ? (
             <img src={author.avatar} alt={author.name} className="w-8 h-8 rounded-full object-cover" />
           ) : (
@@ -59,7 +67,10 @@ export default function PostCard({ post }) {
               {author?.name?.charAt(0).toUpperCase() || "U"}
             </span>
           )}
-        </Link>
+        </button>
+        {authorLightboxOpen && (
+          <Lightbox src={author?.avatar} alt={author?.name} onClose={() => setAuthorLightboxOpen(false)} />
+        )}
         <p className="text-xs">
           <Link
             to={`/profile/${author?._id || author?.id}`}

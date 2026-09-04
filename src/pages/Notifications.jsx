@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Heart, MessageCircle, UserPlus, CornerDownRight, Rss, Bell } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
+import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
 const typeIcon = {
@@ -22,6 +23,7 @@ const typeText = {
 };
 
 export default function Notifications() {
+  const { setUnreadCount } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -49,7 +51,10 @@ export default function Notifications() {
     })();
 
     // Opening this page is a natural "I've seen my notifications" signal
-    api.patch("/notifications/read-all").catch(() => {});
+    api
+      .patch("/notifications/read-all")
+      .then(() => setUnreadCount(0)) // Navbar ka badge bhi turant 0 ho jaye
+      .catch(() => {});
   }, []);
 
   const handleLoadMore = async () => {
