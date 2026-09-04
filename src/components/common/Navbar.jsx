@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { primaryCategories, moreCategories, categorySlug } from "../../constants/categories";
 import NotificationBell from "./NotificationBell";
+import logo from "../../assets/logo_white_preview.png";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -29,8 +30,8 @@ export default function Navbar() {
   return (
     <header className="bg-primaryDark relative">
       <nav className="max-w-6xl mx-auto flex items-center justify-between px-6 py-3">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="text-white font-medium text-lg">VarityWire</span>
+        <Link to="/" className="flex items-center">
+          <img src={logo} alt="VarityWire" className="h-10 w-auto" />
         </Link>
 
         {/* Right-side controls — nav links, notification bell, aur hamburger
