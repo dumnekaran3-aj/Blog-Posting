@@ -211,7 +211,11 @@ export default function BlogDetail() {
 
             {renderMedia()}
 
-            <div className="text-sm text-textDark leading-relaxed whitespace-pre-wrap mb-6">
+            <div
+              className={`text-sm text-textDark leading-relaxed whitespace-pre-wrap mb-6 ${
+                post.textStyle === "italic" ? "italic" : post.textStyle === "normal" ? "" : "font-bold"
+              }`}
+            >
               {linkify(post.content)}
             </div>
 

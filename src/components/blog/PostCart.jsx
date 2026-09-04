@@ -22,6 +22,7 @@ export default function PostCard({ post }) {
     slug,
     title,
     content,
+    textStyle,
     thumbnail,
     mediaUrl,
     category,
@@ -44,6 +45,13 @@ export default function PostCard({ post }) {
   const isImage = mediaType === "image" && !!mediaUrl;
   const isVideo = mediaType === "video" && !!mediaUrl;
   const isAudio = mediaType === "audio" && !!mediaUrl;
+
+  // Posts saved before textStyle existed have no value for it (undefined)
+  // — fall back to "bold" for those so they keep looking exactly like they
+  // did before this feature shipped. Only posts that explicitly chose
+  // "normal" or "italic" in the editor render differently.
+  const resolvedTextStyle = textStyle || "bold";
+  const textStyleClass = resolvedTextStyle === "italic" ? "italic" : resolvedTextStyle === "normal" ? "" : "font-bold";
 
   const trimmedContent = (content || "").trim();
   const isLong = trimmedContent.length > PREVIEW_CHAR_THRESHOLD;
@@ -190,12 +198,13 @@ export default function PostCard({ post }) {
           </div>
         </div>
 
-        {/* ---- Text preview — bold, clamped, with Show more/less toggle,
-              URLs inside auto-linked ---- */}
+        {/* ---- Text preview — clamped, style per the post's saved
+              textStyle choice, with Show more/less toggle, URLs
+              auto-linked ---- */}
         {trimmedContent && (
           <div className="px-3 py-2.5">
             <p
-              className={`text-sm font-bold text-textDark whitespace-pre-line ${
+              className={`text-sm text-textDark whitespace-pre-line ${textStyleClass} ${
                 expanded ? "" : "line-clamp-3"
               }`}
             >
