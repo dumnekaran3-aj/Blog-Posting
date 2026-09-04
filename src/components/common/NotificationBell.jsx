@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bell, Heart, MessageCircle, UserPlus, CornerDownRight, Rss } from "lucide-react";
+import { Bell, Heart, MessageCircle, UserPlus, CornerDownRight, Rss, X } from "lucide-react";
 import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 
@@ -111,62 +111,84 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute top-full right-0 mt-2 bg-white border border-borderClr rounded-lg shadow-lg w-80 max-h-96 overflow-y-auto z-50">
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-borderClr">
-            <p className="text-xs font-medium text-textDark">Notifications</p>
-            {unreadCount > 0 && (
-              <button onClick={handleMarkAllRead} className="text-[11px] text-primary hover:underline">
-                Mark all as read
-              </button>
-            )}
-          </div>
-
-          {loading && <p className="text-xs text-textMuted p-4">Loading...</p>}
-          {!loading && notifications.length === 0 && (
-            <p className="text-xs text-textMuted p-4">No notifications yet.</p>
-          )}
-
-          {!loading &&
-            notifications.map((notif) => {
-              const { Icon, color } = typeIcon[notif.type] || typeIcon.like;
-              const linkTo = notif.post?.slug ? `/blog/${notif.post.slug}` : `/profile/${notif.sender?._id}`;
-
-              return (
-                <Link
-                  key={notif._id}
-                  to={linkTo}
-                  onClick={() => handleClickNotification(notif)}
-                  className={`flex items-start gap-2.5 px-4 py-3 border-b border-borderClr last:border-0 hover:bg-bgLight ${
-                    !notif.read ? "bg-primary/5" : ""
-                  }`}
-                >
-                  <div className={`mt-0.5 ${color}`}>
-                    <Icon size={14} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs text-textDark">
-                      <span className="font-medium">{notif.sender?.name || "Someone"}</span>{" "}
-                      {typeText[notif.type] || "interacted with you"}
-                    </p>
-                    {notif.post?.title && (
-                      <p className="text-[11px] text-textMuted truncate">{notif.post.title}</p>
-                    )}
-                    <p className="text-[10px] text-textMuted mt-0.5">
-                      {new Date(notif.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                    </p>
-                  </div>
-                  {!notif.read && <span className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />}
-                </Link>
-              );
-            })}
-
-          <Link
-            to="/notifications"
-            onClick={() => setOpen(false)}
-            className="block text-center text-[11px] text-primary hover:underline px-4 py-2.5 border-t border-borderClr"
+        <div
+          className="fixed inset-0 bg-black/40 z-[100] flex items-end sm:items-start sm:justify-end sm:bg-transparent sm:inset-auto"
+          onClick={() => setOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Notifications"
+        >
+          <div
+            className="bg-white rounded-t-2xl sm:rounded-lg sm:border sm:border-borderClr shadow-lg w-full sm:w-80 sm:absolute sm:top-12 sm:right-6 max-h-[75vh] sm:max-h-96 overflow-y-auto pb-[env(safe-area-inset-bottom)]"
+            onClick={(e) => e.stopPropagation()}
           >
-            View all notifications
-          </Link>
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-borderClr sticky top-0 bg-white">
+              <p className="text-xs font-medium text-textDark">Notifications</p>
+              <div className="flex items-center gap-3">
+                {unreadCount > 0 && (
+                  <button onClick={handleMarkAllRead} className="text-[11px] text-primary hover:underline">
+                    Mark all as read
+                  </button>
+                )}
+                {/* Close button — on mobile there's no obvious "click outside" target
+                    once the sheet covers most of the screen, so give an explicit way out */}
+                <button
+                  onClick={() => setOpen(false)}
+                  aria-label="Close notifications"
+                  className="sm:hidden text-textMuted hover:text-textDark"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {loading && <p className="text-xs text-textMuted p-4">Loading...</p>}
+            {!loading && notifications.length === 0 && (
+              <p className="text-xs text-textMuted p-4">No notifications yet.</p>
+            )}
+
+            {!loading &&
+              notifications.map((notif) => {
+                const { Icon, color } = typeIcon[notif.type] || typeIcon.like;
+                const linkTo = notif.post?.slug ? `/blog/${notif.post.slug}` : `/profile/${notif.sender?._id}`;
+
+                return (
+                  <Link
+                    key={notif._id}
+                    to={linkTo}
+                    onClick={() => handleClickNotification(notif)}
+                    className={`flex items-start gap-2.5 px-4 py-3 border-b border-borderClr last:border-0 hover:bg-bgLight ${
+                      !notif.read ? "bg-primary/5" : ""
+                    }`}
+                  >
+                    <div className={`mt-0.5 ${color}`}>
+                      <Icon size={14} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-textDark">
+                        <span className="font-medium">{notif.sender?.name || "Someone"}</span>{" "}
+                        {typeText[notif.type] || "interacted with you"}
+                      </p>
+                      {notif.post?.title && (
+                        <p className="text-[11px] text-textMuted truncate">{notif.post.title}</p>
+                      )}
+                      <p className="text-[10px] text-textMuted mt-0.5">
+                        {new Date(notif.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      </p>
+                    </div>
+                    {!notif.read && <span className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />}
+                  </Link>
+                );
+              })}
+
+            <Link
+              to="/notifications"
+              onClick={() => setOpen(false)}
+              className="block text-center text-[11px] text-primary hover:underline px-4 py-2.5 border-t border-borderClr"
+            >
+              View all notifications
+            </Link>
+          </div>
         </div>
       )}
     </div>
