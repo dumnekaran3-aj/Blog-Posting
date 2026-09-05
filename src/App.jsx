@@ -35,6 +35,7 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPosts from "./pages/admin/AdminPosts";
+import AdminCreatePost from "./pages/admin/AdminCreatePost";
 import AdminComments from "./pages/admin/AdminComments";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
@@ -122,6 +123,7 @@ function App() {
               <Route index element={<AdminOverview />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="posts" element={<AdminPosts />} />
+              <Route path="posts/new" element={<AdminCreatePost />} />
               <Route path="comments" element={<AdminComments />} />
               <Route path="categories" element={<AdminCategories />} />
               <Route path="logs" element={<AdminAuditLogs />} />

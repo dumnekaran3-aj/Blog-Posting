@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Search, Plus } from "lucide-react";
 import adminApi from "../../services/adminApi";
+import { ADMIN_PATH } from "../../constants/adminPath";
 
 export default function AdminPosts() {
   const [posts, setPosts] = useState([]);
@@ -45,7 +47,15 @@ export default function AdminPosts() {
 
   return (
     <div className="p-8">
-      <h1 className="text-xl font-medium text-textDark mb-1">Posts</h1>
+      <div className="flex items-center justify-between mb-1">
+        <h1 className="text-xl font-medium text-textDark">Posts</h1>
+        <Link
+          to={`/${ADMIN_PATH}/posts/new`}
+          className="flex items-center gap-1.5 text-xs bg-primary text-white px-3 py-1.5 rounded-md hover:bg-primary/90"
+        >
+          <Plus size={13} /> New post
+        </Link>
+      </div>
       <p className="text-xs text-textMuted mb-5">Moderate any post on the site</p>
 
       <div className="bg-white border border-borderClr rounded-xl px-3 py-2 flex items-center gap-2 mb-4 max-w-xs">
