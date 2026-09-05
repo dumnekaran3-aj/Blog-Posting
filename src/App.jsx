@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
 import { ADMIN_PATH } from "./constants/adminPath";
@@ -129,6 +129,13 @@ function App() {
               <Route path="logs" element={<AdminAuditLogs />} />
               <Route path="accounts" element={<AdminAccounts />} />
             </Route>
+
+            {/* Catch-all — koi bhi galat/anjaan URL (jaise "/admin" agar wo
+                tumhara asli configured ADMIN_PATH nahi hai) ab BLANK page
+                dikhane ke bajaye home pe chala jata hai. Pehle koi fallback
+                route hi nahi tha, isliye React Router kuch bhi match na hone
+                par literally kuch render nahi karta tha — plain white screen. */}
+            <Route path="*" element={<Navigate to="/" replace />} />
 
           </Routes>
         </BrowserRouter>
