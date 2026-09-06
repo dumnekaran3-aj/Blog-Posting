@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import ForgotPassword from "./pages/Forgotpassword";
 import ResetPassword from "./pages/Resetpassword";
 import Signup from "./pages/Signup";
+import VerifyOtp from "./pages/VerifyOtp";
 import BlogDetail from "./pages/BlogDetail";
 import CreatePost from "./pages/CreatePost";
 import PrivateRoute from "./routes/PrivateRoute";
@@ -99,6 +100,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/verify-otp" element={<VerifyOtp />} />
             <Route path="/blog/:slug" element={<BlogDetail />} />
 
             <Route

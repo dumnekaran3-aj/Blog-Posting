@@ -10,17 +10,27 @@ export default function Login() {
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setNeedsVerification(false);
     setLoading(true);
     try {
       await login(form);
       navigate("/"); // login ke baad home pe bhej do
     } catch (err) {
-      setError(err.response?.data?.msg || "Invalid email or password");
+      const msg = err.response?.data?.msg || "Invalid email or password";
+      setError(msg);
+      // Backend yahi exact message bhejta hai jab account signup to hua
+      // hai par OTP verify nahi hua — is case mein "Invalid email or
+      // password" ka error dikhana galat hota, user ko turant verify
+      // page ka link chahiye, na ki ek dead-end error.
+      if (msg === "Please verify OTP before logging in") {
+        setNeedsVerification(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -65,6 +75,15 @@ export default function Login() {
             </div>
 
             {error && <p className="text-xs text-danger">{error}</p>}
+            {needsVerification && (
+              <Link
+                to="/verify-otp"
+                state={{ email: form.email }}
+                className="text-xs text-primary hover:underline -mt-1"
+              >
+                Verify your email now →
+              </Link>
+            )}
 
             <button
               type="submit"
