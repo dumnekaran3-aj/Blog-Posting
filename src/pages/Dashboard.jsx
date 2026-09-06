@@ -5,21 +5,15 @@ import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import Lightbox from "../components/common/Lightbox";
 import FollowListModal from "../components/profile/FollowListModal";
-import AvatarUpload from "../components/profile/AvatarUpload";
-import { categories } from "../constants/categories";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
-const MAX_INTERESTS = 4;
-
 export default function Dashboard() {
-  const { user, updateProfile } = useAuth();
+  const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [followModalType, setFollowModalType] = useState(null); // "followers" | "following" | null
-  const [selectedInterests, setSelectedInterests] = useState(user?.interests || []);
-  const [savingInterests, setSavingInterests] = useState(false);
 
   const fetchPosts = async () => {
     try {
@@ -37,10 +31,6 @@ export default function Dashboard() {
     fetchPosts();
   }, []);
 
-  useEffect(() => {
-    setSelectedInterests(user?.interests || []);
-  }, [user]);
-
   const handleDelete = async (id, title) => {
     if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) return;
     try {
@@ -50,36 +40,6 @@ export default function Dashboard() {
       // could add a toast here later
     }
   };
-
-  const handleAvatarUploaded = async (url) => {
-    try {
-      await updateProfile({ avatar: url });
-    } catch (err) {
-      // could add a toast here later
-    }
-  };
-
-  const toggleInterest = (value) => {
-    setSelectedInterests((prev) => {
-      if (prev.includes(value)) return prev.filter((v) => v !== value);
-      if (prev.length >= MAX_INTERESTS) return prev; // silently ignore past the cap
-      return [...prev, value];
-    });
-  };
-
-  const handleSaveInterests = async () => {
-    setSavingInterests(true);
-    try {
-      await updateProfile({ interests: selectedInterests });
-    } catch (err) {
-      // could add a toast here later
-    } finally {
-      setSavingInterests(false);
-    }
-  };
-
-  const interestsChanged =
-    JSON.stringify([...selectedInterests].sort()) !== JSON.stringify([...(user?.interests || [])].sort());
 
   const stats = {
     total: posts.length,
@@ -94,16 +54,23 @@ export default function Dashboard() {
       <Navbar />
 
       <div className="flex-1 max-w-5xl mx-auto w-full px-6 py-10">
-        {/* Profile header */}
+        {/* Profile header — display only. Avatar/name/interests are edited
+            from Settings, not here, to keep a single source of truth for
+            profile editing. */}
         <div className="bg-white border border-borderClr rounded-xl p-5 mb-6 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
-            <AvatarUpload
-              avatarUrl={user?.avatar}
-              name={user?.name}
-              size={56}
-              onUploaded={handleAvatarUploaded}
-              onClickImage={() => user?.avatar && setLightboxOpen(true)}
-            />
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                onClick={() => setLightboxOpen(true)}
+                className="w-14 h-14 rounded-full object-cover cursor-pointer"
+              />
+            ) : (
+              <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center text-lg font-medium">
+                {user?.name?.charAt(0).toUpperCase() || "U"}
+              </div>
+            )}
             <div>
               <p className="text-base font-medium text-textDark">{user?.name}</p>
               <p className="text-xs text-textMuted">{user?.email}</p>
@@ -139,53 +106,6 @@ export default function Dashboard() {
           >
             <SettingsIcon size={13} /> Settings
           </Link>
-        </div>
-
-        {/* Interests */}
-        <div className="bg-white border border-borderClr rounded-xl p-5 mb-6">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm font-medium text-textDark">Your interests</h2>
-            <span className="text-[11px] text-textMuted">
-              {selectedInterests.length}/{MAX_INTERESTS} selected
-            </span>
-          </div>
-          <p className="text-xs text-textMuted mb-3">
-            Pick up to {MAX_INTERESTS} categories you care about most.
-          </p>
-
-          <div className="flex flex-wrap gap-2 mb-3">
-            {categories.map((cat) => {
-              const active = selectedInterests.includes(cat.value);
-              const disabled = !active && selectedInterests.length >= MAX_INTERESTS;
-              return (
-                <button
-                  key={cat.value}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => toggleInterest(cat.value)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors flex items-center gap-1.5 ${
-                    active
-                      ? "bg-primary text-white border-primary"
-                      : disabled
-                      ? "text-textMuted/50 border-borderClr cursor-not-allowed"
-                      : "text-textDark border-borderClr hover:border-primary/40"
-                  }`}
-                >
-                  <span>{cat.emoji}</span> {cat.value}
-                </button>
-              );
-            })}
-          </div>
-
-          {interestsChanged && (
-            <button
-              onClick={handleSaveInterests}
-              disabled={savingInterests}
-              className="text-xs bg-primary text-white px-4 py-1.5 rounded-md hover:bg-primary/90 disabled:opacity-60"
-            >
-              {savingInterests ? "Saving..." : "Save interests"}
-            </button>
-          )}
         </div>
 
         {/* My Posts */}

@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 export default function LikeButton({ postId, initialLikesCount = 0, initialLiked = false, size = "sm" }) {
   const { user, socket } = useAuth();
-  const navigate = useNavigate();
   const [liked, setLiked] = useState(initialLiked);
   const [count, setCount] = useState(initialLikesCount);
   const [loading, setLoading] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   // Real-time — koi bhi is post ko like/unlike kare (khud ya koi doosra
   // viewer), sabka count turant sync ho jata hai
@@ -28,7 +27,10 @@ export default function LikeButton({ postId, initialLikesCount = 0, initialLiked
 
   const handleClick = async () => {
     if (!user) {
-      navigate("/login"); // login zaroori hai like karne ke liye
+      // No redirect, no API call, no count change — just a brief prompt.
+      // Browsing/reading stays uninterrupted for logged-out visitors.
+      setShowLoginPrompt(true);
+      setTimeout(() => setShowLoginPrompt(false), 2200);
       return;
     }
     if (loading) return;
@@ -56,16 +58,24 @@ export default function LikeButton({ postId, initialLikesCount = 0, initialLiked
   const textSize = size === "lg" ? "text-sm" : "text-[11px]";
 
   return (
-    <button
-      onClick={handleClick}
-      disabled={loading}
-      className={`flex items-center gap-1 ${textSize} transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
-        liked ? "text-accent" : "text-amber-700 hover:text-accent"
-      }`}
-      aria-label={liked ? "Unlike post" : "Like post"}
-    >
-      <Heart size={iconSize} fill={liked ? "currentColor" : "none"} />
-      {count}
-    </button>
+    <div className="relative inline-flex">
+      <button
+        onClick={handleClick}
+        disabled={loading}
+        className={`flex items-center gap-1 ${textSize} transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+          liked ? "text-accent" : "text-amber-700 hover:text-accent"
+        }`}
+        aria-label={liked ? "Unlike post" : "Like post"}
+      >
+        <Heart size={iconSize} fill={liked ? "currentColor" : "none"} />
+        {count}
+      </button>
+
+      {showLoginPrompt && (
+        <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-primaryDark text-white text-[11px] px-2.5 py-1.5 rounded-md whitespace-nowrap z-50 shadow-lg animate-pulse-once">
+          Please login
+        </div>
+      )}
+    </div>
   );
 }
