@@ -74,6 +74,19 @@ export default function Dashboard() {
             <div>
               <p className="text-base font-medium text-textDark">{user?.name}</p>
               <p className="text-xs text-textMuted">{user?.email}</p>
+              {/* Read-only — edit sirf Settings page se hota hai, yahan sirf display */}
+              {user?.interests?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {user.interests.map((interest) => (
+                    <span
+                      key={interest}
+                      className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary"
+                    >
+                      {interest}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
