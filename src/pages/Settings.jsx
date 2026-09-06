@@ -41,8 +41,11 @@ export default function Settings() {
   const handleAvatarUploaded = async (url) => {
     try {
       await updateProfile({ avatar: url });
+      setProfileMsg({ type: "success", text: "Profile picture updated" });
     } catch (err) {
-      // could add a toast here later
+      // Pehle silently swallow ho raha tha — agar R2 pe upload ho gaya
+      // lekin profile-save (PUT /auth/profile) fail ho jaye, ab wo bhi dikhega
+      setProfileMsg({ type: "error", text: err.response?.data?.msg || "Could not save profile picture" });
     }
   };
 

@@ -6,18 +6,23 @@ import uploadDirectToR2 from "../../utils/uploadDirect";
 // directly to R2. Fires onUploaded(url) when done.
 export default function AvatarUpload({ avatarUrl, name, size = 56, onUploaded, onClickImage }) {
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState(null);
   const inputRef = useRef(null);
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    setError(null);
     setUploading(true);
     try {
-      const url = await uploadDirectToR2(file, file.name, file.type);
-      onUploaded(url);
+      const url = await uploadDirectToR2(file, file.name, file.type, "avatars");
+      await onUploaded(url);
     } catch (err) {
-      // could add a toast here later
+      // Pehle ye poora silently swallow ho raha tha (khali catch block) —
+      // isliye upload fail hone par user ko kuch pata hi nahi chalta tha,
+      // sirf "kuch nahi hua" jaisa lagta tha. Ab actual reason dikhta hai.
+      setError(err?.response?.data?.msg || err?.message || "Upload failed. Please try again.");
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -60,6 +65,12 @@ export default function AvatarUpload({ avatarUrl, name, size = 56, onUploaded, o
         onChange={handleFileChange}
         className="hidden"
       />
+
+      {error && (
+        <p className="absolute top-full left-0 mt-1 w-40 text-[10px] text-danger leading-tight">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
