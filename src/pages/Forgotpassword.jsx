@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
+import FormAlert from "../components/common/FormAlert";
 import { useAuth } from "../context/AuthContext";
 
 export default function ForgotPassword() {
@@ -52,7 +53,7 @@ export default function ForgotPassword() {
               />
             </div>
 
-            {error && <p className="text-xs text-danger">{error}</p>}
+            <FormAlert message={error} />
 
             <button
               type="submit"
