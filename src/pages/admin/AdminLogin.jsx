@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import { ADMIN_PATH } from "../../constants/adminPath";
+import NoIndex from "../../components/common/NoIndex";
 
 export default function AdminLogin() {
   const { loginStep1, verify2FA } = useAdminAuth();
@@ -50,6 +51,7 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-primaryDark px-6">
+      <NoIndex />
       <div className="w-full max-w-sm bg-white rounded-xl p-6">
         <div className="flex items-center gap-2 mb-1">
           <ShieldCheck size={20} className="text-primary" />
@@ -137,4 +139,4 @@ export default function AdminLogin() {
       </div>
     </div>
   );
-}   
+}

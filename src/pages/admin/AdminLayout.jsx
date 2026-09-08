@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import { ADMIN_PATH } from "../../constants/adminPath";
+import NoIndex from "../../components/common/NoIndex";
 
 const navItems = [
   { to: `/${ADMIN_PATH}`, label: "Overview", icon: LayoutDashboard, roles: ["admin", "moderator", "analyst"], end: true },
@@ -35,6 +36,7 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen flex bg-bgLight">
+      <NoIndex />
       <aside className="w-56 bg-primaryDark flex flex-col shrink-0">
         <div className="px-5 py-4 border-b border-white/10">
           <p className="text-white text-sm font-medium">VarityWire</p>

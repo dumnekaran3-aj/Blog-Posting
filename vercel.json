@@ -1,5 +1,7 @@
 {
   "rewrites": [
+    { "source": "/sitemap.xml", "destination": "https://vritywire-backend.onrender.com/sitemap.xml" },
+    { "source": "/robots.txt", "destination": "https://vritywire-backend.onrender.com/robots.txt" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
