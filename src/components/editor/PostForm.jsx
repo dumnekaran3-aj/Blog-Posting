@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import MediaUploader from "./MediaUploader";
+import FormatToolbar from "./FormatToolbar";
 import { categories } from "../../constants/categories";
 
 const mediaTypes = ["text", "image", "video", "audio"];
@@ -27,6 +28,7 @@ export default function PostForm({ initialData, onSubmit, mode = "create" }) {
   });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const textareaRef = useRef(null);
 
   const handleMediaTypeChange = (type) => {
     setForm({
@@ -146,7 +148,16 @@ export default function PostForm({ initialData, onSubmit, mode = "create" }) {
           </div>
         </div>
 
+        <div className="mb-1.5">
+          <FormatToolbar
+            textareaRef={textareaRef}
+            content={form.content}
+            onChange={(val) => setForm((prev) => ({ ...prev, content: val }))}
+          />
+        </div>
+
         <textarea
+          ref={textareaRef}
           value={form.content}
           onChange={(e) => setForm({ ...form, content: e.target.value })}
           placeholder="Write your post..."

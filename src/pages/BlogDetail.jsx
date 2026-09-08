@@ -9,7 +9,7 @@ import CommentThread from "../components/blog/CommentThread";
 import Lightbox from "../components/common/Lightbox";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-import linkify from "../utils/linkify";
+import renderPostContent from "../utils/renderPostContent";
 
 export default function BlogDetail() {
   const { slug } = useParams();
@@ -216,7 +216,7 @@ export default function BlogDetail() {
                 post.textStyle === "italic" ? "italic" : post.textStyle === "normal" ? "" : "font-bold"
               }`}
             >
-              {linkify(post.content)}
+              {renderPostContent(post.content)}
             </div>
 
             <div className="flex items-center gap-5 border-t border-b border-borderClr py-3">

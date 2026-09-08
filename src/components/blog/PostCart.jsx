@@ -4,7 +4,7 @@ import { MessageCircle, Eye, PlayCircle, Headphones } from "lucide-react";
 import LikeButton from "./LikeButton";
 import ShareButton from "./ShareButton";
 import Lightbox from "../common/Lightbox";
-import linkify from "../../utils/linkify";
+import renderPostContent from "../../utils/renderPostContent";
 
 const categoryStyles = {
   default: "bg-textMuted/10 text-textMuted",
@@ -208,7 +208,7 @@ export default function PostCard({ post }) {
                 expanded ? "" : "line-clamp-3"
               }`}
             >
-              {linkify(trimmedContent)}
+              {renderPostContent(trimmedContent)}
             </p>
             {isLong && (
               <button
