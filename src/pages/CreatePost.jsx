@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import MediaUploader from "../components/editor/MediaUploader";
+import FormatToolbar from "../components/editor/FormatToolbar";
 import { categories } from "../constants/categories";
 import api from "../services/api";
 
@@ -27,6 +28,7 @@ export default function CreatePost() {
   });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const textareaRef = useRef(null);
 
   const handleMediaTypeChange = (type) => {
     // media type badalte hi purani uploaded file clear kar do — mismatch avoid karne ke liye
@@ -152,7 +154,16 @@ export default function CreatePost() {
               </div>
             </div>
 
+            <div className="mb-1.5">
+              <FormatToolbar
+                textareaRef={textareaRef}
+                content={form.content}
+                onChange={(val) => setForm((prev) => ({ ...prev, content: val }))}
+              />
+            </div>
+
             <textarea
+              ref={textareaRef}
               value={form.content}
               onChange={(e) => setForm({ ...form, content: e.target.value })}
               placeholder="Write your post..."
