@@ -85,3 +85,49 @@ export function applyColorFormat(text, selectionStart, selectionEnd, hex) {
     selectionEnd: selectionEnd + open.length + selected.length,
   };
 }
+
+// Inserts a starter 3-column table skeleton at the cursor. Uses standard
+// markdown pipe-table syntax (matches GitHub/Reddit-style editors) — the
+// renderer (renderPostContent.jsx) detects a header row + a "|---|---|"
+// separator row to know a table block starts. Selects the first cell's
+// placeholder text afterward so the user can type straight over it.
+export function insertTableBlock(text, cursorPos) {
+  const needsLeadingNewline = cursorPos > 0 && text[cursorPos - 1] !== "\n";
+  const skeleton =
+    `${needsLeadingNewline ? "\n\n" : ""}` +
+    `| Column 1 | Column 2 | Column 3 |\n` +
+    `|----------|----------|----------|\n` +
+    `| Row 1    | Row 1    | Row 1    |\n` +
+    `| Row 2    | Row 2    | Row 2    |\n\n`;
+
+  const newText = text.slice(0, cursorPos) + skeleton + text.slice(cursorPos);
+
+  // Select "Column 1" in the header row so it's ready to type over
+  const firstCellStart = cursorPos + skeleton.indexOf("Column 1");
+  const firstCellEnd = firstCellStart + "Column 1".length;
+
+  return { text: newText, selectionStart: firstCellStart, selectionEnd: firstCellEnd };
+}
+
+// Inserts a fenced chart data block:
+//   ```chart:bar
+//   Cisco,1000
+//   HPE,527.9
+//   ```
+// `rows` is an array of { label, value } from the chart builder UI.
+// CSV-ish on purpose — plain text, no HTML/JS ever enters the stored
+// content, so there's nothing here that needs sanitizing on the way in.
+export function insertChartBlock(text, cursorPos, chartType, rows) {
+  const needsLeadingNewline = cursorPos > 0 && text[cursorPos - 1] !== "\n";
+  const csvLines = rows
+    .filter((r) => r.label.trim() && r.value.toString().trim() !== "")
+    .map((r) => `${r.label.trim().replace(/,/g, "")},${r.value}`)
+    .join("\n");
+
+  const block =
+    `${needsLeadingNewline ? "\n\n" : ""}` + "```chart:" + chartType + "\n" + csvLines + "\n```\n\n";
+
+  const newText = text.slice(0, cursorPos) + block + text.slice(cursorPos);
+  const cursor = cursorPos + block.length;
+  return { text: newText, selectionStart: cursor, selectionEnd: cursor };
+}

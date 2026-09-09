@@ -1,12 +1,21 @@
 import { useState, useRef, useEffect } from "react";
-import { Bold, Italic, Underline, Strikethrough, Palette } from "lucide-react";
-import { applyInlineFormat, applyColorFormat, COLOR_PRESETS } from "../../utils/textFormatting";
+import { Bold, Italic, Underline, Strikethrough, Palette, Table, BarChart } from "lucide-react";
+import {
+  applyInlineFormat,
+  applyColorFormat,
+  insertTableBlock,
+  insertChartBlock,
+  COLOR_PRESETS,
+} from "../../utils/textFormatting";
+import ChartBuilder from "./ChartBuilder";
 
 // textareaRef: ref to the <textarea> DOM node
 // content / onChange: the form's content state + setter
 export default function FormatToolbar({ textareaRef, content, onChange }) {
   const [colorOpen, setColorOpen] = useState(false);
   const colorPopoverRef = useRef(null);
+  const [chartOpen, setChartOpen] = useState(false);
+  const chartPopoverRef = useRef(null);
 
   useEffect(() => {
     if (!colorOpen) return;
@@ -18,6 +27,17 @@ export default function FormatToolbar({ textareaRef, content, onChange }) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [colorOpen]);
+
+  useEffect(() => {
+    if (!chartOpen) return;
+    const handleClickOutside = (e) => {
+      if (chartPopoverRef.current && !chartPopoverRef.current.contains(e.target)) {
+        setChartOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [chartOpen]);
 
   // Applies `updater` (one of applyInlineFormat/applyColorFormat, pre-bound
   // to its extra args) using the textarea's live selection, updates the
@@ -38,6 +58,21 @@ export default function FormatToolbar({ textareaRef, content, onChange }) {
     // The textarea's value hasn't re-rendered yet on this tick — wait a
     // frame before restoring selection, otherwise setSelectionRange runs
     // against the OLD value and the cursor lands in the wrong place.
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(selectionStart, selectionEnd);
+    });
+  };
+
+  // Same idea as runFormat, but for insertions that happen AT the cursor
+  // position rather than wrapping a selection (table skeleton, chart block).
+  const runInsert = (updater) => {
+    const el = textareaRef.current;
+    if (!el) return;
+
+    const { text, selectionStart, selectionEnd } = updater(content, el.selectionStart);
+    onChange(text);
+
     requestAnimationFrame(() => {
       el.focus();
       el.setSelectionRange(selectionStart, selectionEnd);
@@ -90,6 +125,38 @@ export default function FormatToolbar({ textareaRef, content, onChange }) {
                 style={{ backgroundColor: c.hex }}
               />
             ))}
+          </div>
+        )}
+      </div>
+
+      <button
+        type="button"
+        title="Insert table"
+        onClick={() => runInsert((text, pos) => insertTableBlock(text, pos))}
+        className="p-1.5 rounded-md border border-borderClr text-textMuted hover:border-primary/40 hover:text-primary transition-colors"
+      >
+        <Table size={14} />
+      </button>
+
+      <div className="relative" ref={chartPopoverRef}>
+        <button
+          type="button"
+          title="Insert chart"
+          onClick={() => setChartOpen((v) => !v)}
+          className="p-1.5 rounded-md border border-borderClr text-textMuted hover:border-primary/40 hover:text-primary transition-colors"
+        >
+          <BarChart size={14} />
+        </button>
+
+        {chartOpen && (
+          <div className="absolute z-10 top-full mt-1 left-0">
+            <ChartBuilder
+              onInsert={(type, rows) => {
+                runInsert((text, pos) => insertChartBlock(text, pos, type, rows));
+                setChartOpen(false);
+              }}
+              onClose={() => setChartOpen(false)}
+            />
           </div>
         )}
       </div>
