@@ -78,7 +78,7 @@ export default function CategoryPosts() {
           <p className="text-sm text-textMuted">No posts in this category yet.</p>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="max-w-3xl mx-auto flex flex-col gap-6">
           {!loading && posts.map((post) => <PostCard key={post._id} post={post} />)}
         </div>
 
