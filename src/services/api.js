@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_API_URL || `http://localhost:${import.meta.env.VITE_API_PORT || 5000}/api`,
   withCredentials: true, // REQUIRED — sends the httpOnly auth cookie with every request
   headers: {
     // Required by the backend's CSRF protection (middleware/csrfProtection.js).

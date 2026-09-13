@@ -5,6 +5,7 @@ import LikeButton from "./LikeButton";
 import ShareButton from "./ShareButton";
 import Lightbox from "../common/Lightbox";
 import renderPostContent, { renderPostPreview } from "../../utils/renderPostContent";
+import { htmlToPreviewText } from "../../utils/renderHtmlPostContent";
 
 const categoryStyles = {
   default: "bg-textMuted/10 text-textMuted",
@@ -22,6 +23,7 @@ export default function PostCard({ post }) {
     slug,
     title,
     content,
+    contentFormat,
     textStyle,
     thumbnail,
     mediaUrl,
@@ -53,7 +55,8 @@ export default function PostCard({ post }) {
   const resolvedTextStyle = textStyle || "bold";
   const textStyleClass = resolvedTextStyle === "italic" ? "italic" : resolvedTextStyle === "normal" ? "" : "font-bold";
 
-  const trimmedContent = (content || "").trim();
+  const trimmedContent =
+    contentFormat === "html" ? htmlToPreviewText(content) : (content || "").trim();
   const isLong = trimmedContent.length > PREVIEW_CHAR_THRESHOLD;
 
   return (
@@ -208,7 +211,7 @@ export default function PostCard({ post }) {
                 expanded ? "" : "line-clamp-3"
               }`}
             >
-              {renderPostPreview(trimmedContent)}
+              {contentFormat === "html" ? trimmedContent : renderPostPreview(trimmedContent)}
             </p>
             {isLong && (
               <button

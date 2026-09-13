@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import { AuthProvider } from "./context/AuthContext";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
 import { ADMIN_PATH } from "./constants/adminPath";
@@ -36,7 +37,11 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPosts from "./pages/admin/AdminPosts";
-import AdminCreatePost from "./pages/admin/AdminCreatePost";
+// Lazy-loaded — this page pulls in TipTap/ProseMirror (the rich-text
+// editor), which is sizeable. Splitting it into its own chunk keeps that
+// weight out of the bundle every regular visitor downloads; it's only
+// fetched when an admin actually opens the create-post page.
+const AdminCreatePost = lazy(() => import("./pages/admin/AdminCreatePost"));
 import AdminComments from "./pages/admin/AdminComments";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
@@ -125,7 +130,14 @@ function App() {
               <Route index element={<AdminOverview />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="posts" element={<AdminPosts />} />
-              <Route path="posts/new" element={<AdminCreatePost />} />
+              <Route
+                path="posts/new"
+                element={
+                  <Suspense fallback={<div className="p-8 text-sm text-textMuted">Loading editor...</div>}>
+                    <AdminCreatePost />
+                  </Suspense>
+                }
+              />
               <Route path="comments" element={<AdminComments />} />
               <Route path="categories" element={<AdminCategories />} />
               <Route path="logs" element={<AdminAuditLogs />} />

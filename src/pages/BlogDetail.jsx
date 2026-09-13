@@ -10,6 +10,7 @@ import Lightbox from "../components/common/Lightbox";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import renderPostContent from "../utils/renderPostContent";
+import renderHtmlPostContent from "../utils/renderHtmlPostContent";
 
 export default function BlogDetail() {
   const { slug } = useParams();
@@ -214,9 +215,10 @@ export default function BlogDetail() {
             <div
               className={`text-sm text-textDark leading-relaxed whitespace-pre-wrap mb-6 ${
                 post.textStyle === "italic" ? "italic" : post.textStyle === "normal" ? "" : "font-bold"
+              } [&_h1]:text-xl [&_h1]:font-semibold [&_h1]:mt-3 [&_h1]:mb-1 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-1 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_table]:border-collapse [&_table]:w-full [&_td]:border [&_td]:border-borderClr [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-borderClr [&_th]:px-2 [&_th]:py-1 [&_th]:bg-bgLight [&_a]:text-primary [&_a]:underline [&_img]:max-w-full [&_img]:rounded-md [&_blockquote]:border-l-2 [&_blockquote]:border-borderClr [&_blockquote]:pl-3 [&_blockquote]:italic"
               }`}
             >
-              {renderPostContent(post.content)}
+              {post.contentFormat === "html" ? renderHtmlPostContent(post.content) : renderPostContent(post.content)}
             </div>
 
             <div className="flex items-center gap-5 border-t border-b border-borderClr py-3">
