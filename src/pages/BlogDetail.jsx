@@ -6,11 +6,29 @@ import Footer from "../components/common/Footer";
 import LikeButton from "../components/blog/LikeButton";
 import ShareButton from "../components/blog/ShareButton";
 import CommentThread from "../components/blog/CommentThread";
+import AuthorCard from "../components/blog/AuthorCard";
 import Lightbox from "../components/common/Lightbox";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import renderPostContent from "../utils/renderPostContent";
-import renderHtmlPostContent from "../utils/renderHtmlPostContent";
+import renderHtmlPostContent, { htmlToPreviewText } from "../utils/renderHtmlPostContent";
+import SEOHead from "../components/common/SEOHead";
+
+// Meta-description fallback when the admin hasn't set one manually — strips
+// the plain-format markdown-ish tokens (bold/italic/color/table/chart)
+// down to readable text. Doesn't need to be pixel-perfect, just readable.
+function stripPlainTokens(text) {
+  return (text || "")
+    .replace(/```chart:(bar|line|pie)[\s\S]*?```/g, "")
+    .replace(/\{c:#[0-9A-Fa-f]{6}\}([^{]+)\{\/c\}/g, "$1")
+    .replace(/\*\*([^*\n]+)\*\*/g, "$1")
+    .replace(/__([^_\n]+)__/g, "$1")
+    .replace(/~~([^~\n]+)~~/g, "$1")
+    .replace(/\*([^*\n]+)\*/g, "$1")
+    .replace(/\|/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 export default function BlogDetail() {
   const { slug } = useParams();
@@ -163,6 +181,31 @@ export default function BlogDetail() {
 
         {!loading && post && (
           <>
+            <SEOHead
+              title={post.metaTitle || `${post.title} | VarityWire`}
+              description={
+                post.metaDescription ||
+                (post.contentFormat === "html" ? htmlToPreviewText(post.content) : stripPlainTokens(post.content)).slice(0, 160)
+              }
+              keywords={post.metaKeywords}
+              image={post.thumbnail}
+              url={`/blog/${post.slug}`}
+              type="article"
+              jsonLd={{
+                "@context": "https://schema.org",
+                "@type": "Article",
+                headline: post.metaTitle || post.title,
+                description: post.metaDescription || undefined,
+                image: post.thumbnail ? [post.thumbnail] : undefined,
+                author: (post.postAuthor?.name || post.author?.name)
+                  ? { "@type": "Person", name: post.postAuthor?.name || post.author?.name }
+                  : undefined,
+                datePublished: post.createdAt,
+                dateModified: post.updatedAt || post.createdAt,
+                mainEntityOfPage: `https://varitywire.com/blog/${post.slug}`,
+              }}
+            />
+
             {post.category && (
               <span className="text-[11px] px-2 py-0.5 rounded bg-primary/10 text-primary">
                 {post.category}
@@ -233,6 +276,8 @@ export default function BlogDetail() {
                 <Eye size={16} /> {post.viewsCount} views
               </span>
             </div>
+
+            {post.postAuthor && <AuthorCard author={post.postAuthor} category={post.category} />}
 
             <CommentThread postId={post._id} />
           </>

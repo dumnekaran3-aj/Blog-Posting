@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MediaUploader from "../../components/editor/MediaUploader";
 import AdminRichEditor from "../../components/editor/AdminRichEditor";
+import AuthorPicker from "../../components/editor/AuthorPicker";
 import { categories } from "../../constants/categories";
 import { ADMIN_PATH } from "../../constants/adminPath";
 import adminApi from "../../services/adminApi";
@@ -15,6 +16,7 @@ const MAX_CONTENT_LENGTH = 20000;
 const TABS = [
   { id: "basic", label: "Basic Info" },
   { id: "content", label: "Content" },
+  { id: "seo", label: "SEO" },
 ];
 
 export default function AdminCreatePost() {
@@ -28,6 +30,10 @@ export default function AdminCreatePost() {
     mediaUrl: "",
     thumbnail: "",
     category: categories[0].value,
+    postAuthor: null,
+    metaTitle: "",
+    metaDescription: "",
+    metaKeywords: "",
   });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -129,6 +135,17 @@ export default function AdminCreatePost() {
               </div>
 
               <div>
+                <label className="text-xs text-textMuted mb-1 block">Author</label>
+                <AuthorPicker
+                  value={form.postAuthor}
+                  onChange={(id) => setForm({ ...form, postAuthor: id })}
+                />
+                <p className="text-[11px] text-textMuted mt-1">
+                  Who this post is credited to on the site — not necessarily you.
+                </p>
+              </div>
+
+              <div>
                 <label className="text-xs text-textMuted mb-1 block">Post type</label>
                 <div className="flex gap-2">
                   {mediaTypes.map((type) => (
@@ -176,6 +193,59 @@ export default function AdminCreatePost() {
                 </p>
               </div>
             </div>
+          )}
+
+          {activeTab === "seo" && (
+            <>
+              <p className="text-xs text-textMuted -mt-1">
+                Optional — leave blank to fall back to the post title/content automatically.
+              </p>
+              <div>
+                <label className="text-xs text-textMuted mb-1 block">
+                  Meta Title <span className="text-textMuted/60">({form.metaTitle.length}/70)</span>
+                </label>
+                <input
+                  type="text"
+                  maxLength={70}
+                  value={form.metaTitle}
+                  onChange={(e) => setForm({ ...form, metaTitle: e.target.value })}
+                  placeholder="Shown as the clickable headline in Google search results"
+                  className="w-full text-sm border border-borderClr rounded-md px-3 py-2 outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-textMuted mb-1 block">
+                  Meta Description <span className="text-textMuted/60">({form.metaDescription.length}/160)</span>
+                </label>
+                <textarea
+                  maxLength={160}
+                  rows="3"
+                  value={form.metaDescription}
+                  onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
+                  placeholder="Shown as the snippet text below the title in search results"
+                  className="w-full text-sm border border-borderClr rounded-md px-3 py-2 outline-none focus:border-primary resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-textMuted mb-1 block">
+                  Meta Keywords <span className="text-textMuted/60">({form.metaKeywords.length}/200)</span>
+                </label>
+                <input
+                  type="text"
+                  maxLength={200}
+                  value={form.metaKeywords}
+                  onChange={(e) => setForm({ ...form, metaKeywords: e.target.value })}
+                  placeholder="comma, separated, keywords"
+                  className="w-full text-sm border border-borderClr rounded-md px-3 py-2 outline-none focus:border-primary"
+                />
+                <p className="text-[11px] text-textMuted mt-1">
+                  Note: Google hasn't used meta keywords for ranking since 2009 — this has no real SEO
+                  effect, but some other tools/directories still read it, so it's harmless to fill in.
+                </p>
+              </div>
+            </>
           )}
 
           {error && <p className="text-xs text-danger">{error}</p>}
