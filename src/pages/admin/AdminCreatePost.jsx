@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import MediaUploader from "../../components/editor/MediaUploader";
 import AdminRichEditor from "../../components/editor/AdminRichEditor";
 import AuthorPicker from "../../components/editor/AuthorPicker";
@@ -19,24 +19,58 @@ const TABS = [
   { id: "seo", label: "SEO" },
 ];
 
+const emptyForm = {
+  title: "",
+  content: "",
+  mediaType: "text",
+  mediaUrl: "",
+  thumbnail: "",
+  category: categories[0].value,
+  postAuthor: null,
+  metaTitle: "",
+  metaDescription: "",
+  metaKeywords: "",
+};
+
 export default function AdminCreatePost() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("basic");
+  const { id } = useParams(); // present only on /posts/:id/edit
+  const isEditMode = Boolean(id);
 
-  const [form, setForm] = useState({
-    title: "",
-    content: "",
-    mediaType: "text",
-    mediaUrl: "",
-    thumbnail: "",
-    category: categories[0].value,
-    postAuthor: null,
-    metaTitle: "",
-    metaDescription: "",
-    metaKeywords: "",
-  });
+  const [activeTab, setActiveTab] = useState("basic");
+  const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(isEditMode);
+
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const fetchPost = async () => {
+      setLoading(true);
+      try {
+        const { data } = await adminApi.get(`/admin/posts/${id}`);
+        const post = data.post;
+        setForm({
+          title: post.title || "",
+          content: post.content || "",
+          mediaType: post.mediaType || "text",
+          mediaUrl: post.mediaUrl || "",
+          thumbnail: post.thumbnail || "",
+          category: post.category || categories[0].value,
+          postAuthor: post.postAuthor?._id || post.postAuthor || null,
+          metaTitle: post.metaTitle || "",
+          metaDescription: post.metaDescription || "",
+          metaKeywords: post.metaKeywords || "",
+        });
+      } catch (err) {
+        setError(err.response?.data?.msg || "Failed to load this post.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPost();
+  }, [id, isEditMode]);
 
   const handleMediaTypeChange = (type) => {
     // media type badalte hi purani uploaded file clear kar do — mismatch avoid karne ke liye
@@ -71,7 +105,11 @@ export default function AdminCreatePost() {
 
     setSaving(true);
     try {
-      await adminApi.post("/admin/posts", { ...form, contentFormat: "html", status });
+      if (isEditMode) {
+        await adminApi.patch(`/admin/posts/${id}`, { ...form, contentFormat: "html", status });
+      } else {
+        await adminApi.post("/admin/posts", { ...form, contentFormat: "html", status });
+      }
       navigate(`/${ADMIN_PATH}/posts`);
     } catch (err) {
       setError(err.response?.data?.msg || "Something went wrong. Please try again.");
@@ -80,11 +118,17 @@ export default function AdminCreatePost() {
     }
   };
 
+  if (loading) {
+    return <div className="p-8 text-sm text-textMuted">Loading post...</div>;
+  }
+
   return (
     <div className="p-8 max-w-3xl">
-      <h1 className="text-xl font-medium text-textDark mb-1">Create post</h1>
+      <h1 className="text-xl font-medium text-textDark mb-1">{isEditMode ? "Edit post" : "Create post"}</h1>
       <p className="text-xs text-textMuted mb-6">
-        Published as your linked author profile — visible to readers immediately if you publish.
+        {isEditMode
+          ? "Changes go live immediately if the post is already published."
+          : "Published as your linked author profile — visible to readers immediately if you publish."}
       </p>
 
       <div className="bg-white border border-borderClr rounded-xl overflow-hidden">
@@ -265,7 +309,7 @@ export default function AdminCreatePost() {
               disabled={saving || form.content.length > MAX_CONTENT_LENGTH}
               className="text-sm bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 disabled:opacity-60"
             >
-              {saving ? "Publishing..." : "Publish"}
+              {saving ? "Saving..." : isEditMode ? "Save & Publish" : "Publish"}
             </button>
           </div>
         </div>

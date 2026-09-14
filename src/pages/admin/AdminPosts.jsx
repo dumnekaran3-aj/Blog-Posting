@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Pencil } from "lucide-react";
 import adminApi from "../../services/adminApi";
 import { ADMIN_PATH } from "../../constants/adminPath";
 
@@ -75,6 +75,7 @@ export default function AdminPosts() {
             <tr>
               <th className="text-left px-4 py-2 font-medium">Title</th>
               <th className="text-left px-4 py-2 font-medium">Author</th>
+              <th className="text-left px-4 py-2 font-medium">Created by</th>
               <th className="text-left px-4 py-2 font-medium">Status</th>
               <th className="text-left px-4 py-2 font-medium">Views</th>
               <th className="text-right px-4 py-2 font-medium">Actions</th>
@@ -82,16 +83,23 @@ export default function AdminPosts() {
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan={5} className="px-4 py-6 text-center text-textMuted">Loading...</td></tr>
+              <tr><td colSpan={6} className="px-4 py-6 text-center text-textMuted">Loading...</td></tr>
             )}
             {!loading && posts.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-6 text-center text-textMuted">No posts found.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-6 text-center text-textMuted">No posts found.</td></tr>
             )}
             {!loading &&
               posts.map((post) => (
                 <tr key={post._id} className="border-t border-borderClr">
                   <td className="px-4 py-2.5 text-textDark max-w-xs truncate">{post.title}</td>
                   <td className="px-4 py-2.5 text-textMuted">{post.author?.name || "Unknown"}</td>
+                  <td className="px-4 py-2.5 text-textMuted">
+                    {post.createdByAdmin ? (
+                      <span title={post.createdByAdmin.email}>{post.createdByAdmin.name}</span>
+                    ) : (
+                      <span className="text-textMuted/50">—</span>
+                    )}
+                  </td>
                   <td className="px-4 py-2.5">
                     <span
                       className={`px-2 py-0.5 rounded ${
@@ -103,7 +111,13 @@ export default function AdminPosts() {
                   </td>
                   <td className="px-4 py-2.5 text-textMuted">{post.viewsCount}</td>
                   <td className="px-4 py-2.5">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end items-center gap-2">
+                      <Link
+                        to={`/${ADMIN_PATH}/posts/${post._id}/edit`}
+                        className="flex items-center gap-1 text-primary hover:underline"
+                      >
+                        <Pencil size={11} /> Edit
+                      </Link>
                       {post.status === "published" && (
                         <button onClick={() => handleUnpublish(post._id)} className="text-accent hover:underline">
                           Unpublish

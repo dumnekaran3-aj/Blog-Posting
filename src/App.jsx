@@ -138,6 +138,14 @@ function App() {
                   </Suspense>
                 }
               />
+              <Route
+                path="posts/:id/edit"
+                element={
+                  <Suspense fallback={<div className="p-8 text-sm text-textMuted">Loading editor...</div>}>
+                    <AdminCreatePost />
+                  </Suspense>
+                }
+              />
               <Route path="comments" element={<AdminComments />} />
               <Route path="categories" element={<AdminCategories />} />
               <Route path="logs" element={<AdminAuditLogs />} />
