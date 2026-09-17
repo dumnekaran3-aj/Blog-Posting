@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Eye } from "lucide-react";
+import { Eye, Home as HomeIcon, ChevronRight } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import LikeButton from "../components/blog/LikeButton";
 import ShareButton from "../components/blog/ShareButton";
 import CommentThread from "../components/blog/CommentThread";
 import AuthorCard from "../components/blog/AuthorCard";
+import PostSidebar from "../components/blog/PostSidebar";
 import Lightbox from "../components/common/Lightbox";
+import { categorySlug } from "../constants/categories";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import renderPostContent from "../utils/renderPostContent";
@@ -167,7 +169,8 @@ export default function BlogDetail() {
     <div className="min-h-screen flex flex-col bg-bgLight">
       <Navbar />
 
-      <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-10">
+      <div className="flex-1 max-w-6xl mx-auto w-full px-6 py-10 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-8">
+        <div className="min-w-0">
         {loading && <p className="text-sm text-textMuted">Loading post...</p>}
 
         {!loading && notFound && (
@@ -206,13 +209,40 @@ export default function BlogDetail() {
               }}
             />
 
-            {post.category && (
-              <span className="text-[11px] px-2 py-0.5 rounded bg-primary/10 text-primary">
-                {post.category}
-              </span>
-            )}
+            {/* Breadcrumb — Home / Blog|News / Category / Title. Title is
+                the current page so it's plain text, everything before it
+                navigates. */}
+            <nav className="flex items-center gap-2 text-sm text-textMuted mb-4 flex-wrap">
+              <Link
+                to="/"
+                className="hover:text-primary transition-colors flex items-center px-1.5 py-1 rounded hover:bg-primary/5"
+                aria-label="Home"
+              >
+                <HomeIcon size={16} />
+              </Link>
+              <ChevronRight size={14} className="text-textMuted/50" />
+              <Link
+                to={post.postType === "news" ? "/news" : "/blogs"}
+                className="hover:text-primary transition-colors px-1.5 py-1 rounded hover:bg-primary/5"
+              >
+                {post.postType === "news" ? "News" : "Blog"}
+              </Link>
+              {post.category && (
+                <>
+                  <ChevronRight size={14} className="text-textMuted/50" />
+                  <Link
+                    to={`/category/${categorySlug(post.category)}`}
+                    className="hover:text-primary transition-colors px-1.5 py-1 rounded hover:bg-primary/5"
+                  >
+                    {post.category}
+                  </Link>
+                </>
+              )}
+              <ChevronRight size={14} className="text-textMuted/50" />
+              <span className="text-textDark font-medium truncate max-w-[280px]">{post.title}</span>
+            </nav>
 
-            <h1 className="text-2xl font-medium text-textDark mt-3 mb-2">{post.title}</h1>
+            <h1 className="text-2xl font-medium text-textDark mb-2">{post.title}</h1>
 
             <div className="flex items-center gap-2 text-xs text-textMuted mb-5">
               {/* Avatar click => enlarge (Lightbox), naam click => profile */}
@@ -281,6 +311,14 @@ export default function BlogDetail() {
 
             <CommentThread postId={post._id} />
           </>
+        )}
+        </div>
+
+        {/* Right column — categories + suggestions. Only rendered once the
+            post has loaded, so we can pass its category as the fallback
+            suggestion source for logged-out readers. */}
+        {!loading && post && (
+          <PostSidebar activeCategory={post.category} excludePostId={post._id} />
         )}
       </div>
 

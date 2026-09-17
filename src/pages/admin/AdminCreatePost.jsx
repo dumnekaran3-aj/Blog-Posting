@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import MediaUploader from "../../components/editor/MediaUploader";
 import AdminRichEditor from "../../components/editor/AdminRichEditor";
 import AuthorPicker from "../../components/editor/AuthorPicker";
-import { categories } from "../../constants/categories";
+import { categories, postTypes } from "../../constants/categories";
 import { ADMIN_PATH } from "../../constants/adminPath";
 import adminApi from "../../services/adminApi";
 
@@ -26,6 +26,7 @@ const emptyForm = {
   mediaUrl: "",
   thumbnail: "",
   category: categories[0].value,
+  postType: "blog",
   postAuthor: null,
   metaTitle: "",
   metaDescription: "",
@@ -58,6 +59,7 @@ export default function AdminCreatePost() {
           mediaUrl: post.mediaUrl || "",
           thumbnail: post.thumbnail || "",
           category: post.category || categories[0].value,
+          postType: post.postType === "news" ? "news" : "blog",
           postAuthor: post.postAuthor?._id || post.postAuthor || null,
           metaTitle: post.metaTitle || "",
           metaDescription: post.metaDescription || "",
@@ -161,6 +163,29 @@ export default function AdminCreatePost() {
                   placeholder="Give the post a title"
                   className="w-full text-sm border border-borderClr rounded-md px-3 py-2 outline-none focus:border-primary"
                 />
+              </div>
+
+              <div>
+                <label className="text-xs text-textMuted mb-1 block">Type</label>
+                <div className="flex gap-2">
+                  {postTypes.map((t) => (
+                    <button
+                      key={t.value}
+                      type="button"
+                      onClick={() => setForm({ ...form, postType: t.value })}
+                      className={`text-xs px-4 py-1.5 rounded-md border transition-colors ${
+                        form.postType === t.value
+                          ? "bg-primary text-white border-primary"
+                          : "text-textMuted border-borderClr hover:border-primary/40"
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-textMuted mt-1">
+                  Decides whether this shows under Resource Center → Blogs or → News.
+                </p>
               </div>
 
               <div>

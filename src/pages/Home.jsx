@@ -6,6 +6,7 @@ import Footer from "../components/common/Footer";
 import PostCard from "../components/blog/PostCart";
 import Pagination from "../components/common/Pagination";
 import { useAuth } from "../context/AuthContext";
+import { categories as allCategories, categorySlug } from "../constants/categories";
 import api from "../services/api";
 
 const categories = ["Marketing", "Design", "Tech", "Lifestyle"];
@@ -99,7 +100,7 @@ export default function Home() {
           });
         });
 
-        setSuggestedPosts(merged.slice(0, 5));
+        setSuggestedPosts(merged.slice(0, 6));
       } catch (err) {
         setSuggestedPosts([]);
       }
@@ -166,20 +167,20 @@ export default function Home() {
           </div>
 
           <div className="bg-white border border-borderClr rounded-xl p-4">
-            <p className="text-xs font-medium text-textDark mb-3">
+            <p className="text-sm font-medium text-textDark mb-3">
               Popular categories
             </p>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1">
               {categories.map((cat) => (
                 <button
                   key={cat}
                   onClick={() =>
                     setActiveCategory(activeCategory === cat ? null : cat)
                   }
-                  className={`text-left text-xs px-2.5 py-1.5 rounded-md w-fit transition-colors ${
+                  className={`text-left text-sm px-3 py-2 rounded-md transition-colors ${
                     activeCategory === cat
-                      ? "bg-primary/10 text-primaryDark"
-                      : "text-slate-600 hover:bg-slate-50"
+                      ? "bg-primary/10 text-primaryDark font-medium"
+                      : "text-slate-600 hover:bg-primary/5 hover:text-primary"
                   }`}
                 >
                   {cat}
@@ -188,36 +189,56 @@ export default function Home() {
             </div>
           </div>
 
+          {/* All categories — "Popular categories" upar sirf 4 shortcuts hain
+              jo feed ko inline filter karte hain; ye poori list hai jo har
+              category ke apne page pe le jaati hai */}
+          <div className="bg-white border border-borderClr rounded-xl p-4">
+            <p className="text-sm font-medium text-textDark mb-3">All categories</p>
+            <div className="flex flex-col gap-1">
+              {allCategories.map((cat) => (
+                <Link
+                  key={cat.value}
+                  to={`/category/${categorySlug(cat.value)}`}
+                  className="text-sm px-3 py-2 rounded-md text-slate-600 hover:bg-primary/5 hover:text-primary transition-colors"
+                >
+                  {cat.value}
+                </Link>
+              ))}
+            </div>
+          </div>
+
           {/* Suggested posts — user ke interests ke hisaab se, direct click
               se post khulta hai, koi excerpt/"Show more" nahi (quick discovery) */}
           {suggestedPosts.length > 0 && (
             <div className="bg-white border border-borderClr rounded-xl p-4">
-              <p className="flex items-center gap-1.5 text-xs font-medium text-textDark mb-3">
-                <Sparkles size={13} className="text-primary" /> Suggested for you
+              <p className="flex items-center gap-1.5 text-sm font-medium text-textDark mb-4">
+                <Sparkles size={15} className="text-primary" /> Suggested for you
               </p>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 {suggestedPosts.map((post) => (
                   <Link
                     key={post._id}
                     to={`/blog/${post.slug}`}
-                    className="flex items-center gap-2.5 group"
+                    className="group block rounded-lg overflow-hidden border border-transparent hover:border-borderClr transition-colors"
                   >
                     {post.thumbnail || post.mediaUrl ? (
                       <img
                         src={post.thumbnail || post.mediaUrl}
                         alt={post.title}
-                        className="w-12 h-12 rounded-md object-cover shrink-0"
+                        className="w-full h-32 object-cover rounded-lg"
                       />
                     ) : (
-                      <span className="w-12 h-12 rounded-md bg-primary/10 text-primary flex items-center justify-center text-[10px] font-medium shrink-0">
+                      <div className="w-full h-32 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-2xl font-medium">
                         {post.category?.charAt(0).toUpperCase() || "P"}
-                      </span>
+                      </div>
                     )}
-                    <div className="min-w-0">
-                      <p className="text-xs text-textDark font-medium line-clamp-2 group-hover:text-primary">
+                    <div className="pt-2 px-0.5 pb-1">
+                      <p className="text-[10px] uppercase tracking-wide text-primary font-medium mb-1">
+                        {post.category}
+                      </p>
+                      <p className="text-sm text-textDark font-medium line-clamp-2 leading-snug group-hover:text-primary transition-colors">
                         {post.title}
                       </p>
-                      <p className="text-[10px] text-textMuted mt-0.5">{post.category}</p>
                     </div>
                   </Link>
                 ))}

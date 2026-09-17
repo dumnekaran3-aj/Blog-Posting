@@ -28,3 +28,10 @@ export const categorySlug = (value) =>
     .replace(/&/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+
+// Blog vs News — set only from the admin panel (see AdminCreatePost.jsx).
+// Regular users creating via /create always get 'blog' (server default).
+export const postTypes = [
+  { value: "blog", label: "Blog" },
+  { value: "news", label: "News" },
+];

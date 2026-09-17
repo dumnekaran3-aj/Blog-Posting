@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Search, X, Menu, PenSquare, LogOut, ChevronDown } from "lucide-react";
+import { Search, X, Menu, PenSquare, LogOut, ChevronDown, BookOpen } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { primaryCategories, moreCategories, categorySlug } from "../../constants/categories";
@@ -9,6 +9,7 @@ import logo from "../../assets/logo_white_preview.png";
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
+  const [resourceOpen, setResourceOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { user, logout } = useAuth();
@@ -131,12 +132,43 @@ export default function Navbar() {
 
             {user ? (
               <>
+                {/* Write — hidden for now (client request), intentionally
+                    kept in the code so it can be switched back on by
+                    removing the `hidden` class. /create route still works. */}
                 <Link
                   to="/create"
-                  className="flex items-center gap-1.5 bg-primary text-white text-sm px-4 py-1.5 rounded-md hover:bg-primary/90 transition-colors"
+                  className="hidden items-center gap-1.5 bg-primary text-white text-sm px-4 py-1.5 rounded-md hover:bg-primary/90 transition-colors"
                 >
                   <PenSquare size={14} /> Write
                 </Link>
+
+                <div
+                  className="relative"
+                  onMouseEnter={() => setResourceOpen(true)}
+                  onMouseLeave={() => setResourceOpen(false)}
+                >
+                  <button className="flex items-center gap-1.5 bg-primary text-white text-sm px-4 py-1.5 rounded-md hover:bg-primary/90 transition-colors">
+                    <BookOpen size={14} /> Resource Center <ChevronDown size={13} />
+                  </button>
+                  {resourceOpen && (
+                    <div className="absolute top-full right-0 bg-white border border-borderClr rounded-lg shadow-lg py-2 w-40 z-50">
+                      <Link
+                        to="/blogs"
+                        className="block px-4 py-2 text-sm text-textDark hover:bg-bgLight"
+                        onClick={() => setResourceOpen(false)}
+                      >
+                        Blogs
+                      </Link>
+                      <Link
+                        to="/news"
+                        className="block px-4 py-2 text-sm text-textDark hover:bg-bgLight"
+                        onClick={() => setResourceOpen(false)}
+                      >
+                        News
+                      </Link>
+                    </div>
+                  )}
+                </div>
                 <Link
                   to="/dashboard"
                   className="flex items-center gap-2 text-white/90 hover:text-white"
@@ -163,12 +195,41 @@ export default function Navbar() {
                 </button>
               </>
             ) : (
-              <Link
-                to="/login"
-                className="bg-primary text-white text-sm px-4 py-1.5 rounded-md hover:bg-primary/90 transition-colors"
-              >
-                Sign in
-              </Link>
+              <>
+                <div
+                  className="relative"
+                  onMouseEnter={() => setResourceOpen(true)}
+                  onMouseLeave={() => setResourceOpen(false)}
+                >
+                  <button className="flex items-center gap-1.5 text-sm text-white/80 hover:text-white">
+                    Resource Center <ChevronDown size={13} />
+                  </button>
+                  {resourceOpen && (
+                    <div className="absolute top-full right-0 bg-white border border-borderClr rounded-lg shadow-lg py-2 w-40 z-50">
+                      <Link
+                        to="/blogs"
+                        className="block px-4 py-2 text-sm text-textDark hover:bg-bgLight"
+                        onClick={() => setResourceOpen(false)}
+                      >
+                        Blogs
+                      </Link>
+                      <Link
+                        to="/news"
+                        className="block px-4 py-2 text-sm text-textDark hover:bg-bgLight"
+                        onClick={() => setResourceOpen(false)}
+                      >
+                        News
+                      </Link>
+                    </div>
+                  )}
+                </div>
+                <Link
+                  to="/login"
+                  className="bg-primary text-white text-sm px-4 py-1.5 rounded-md hover:bg-primary/90 transition-colors"
+                >
+                  Sign in
+                </Link>
+              </>
             )}
           </div>
 
@@ -192,9 +253,16 @@ export default function Navbar() {
           <Link to="/categories" className="text-sm text-white" onClick={() => setMenuOpen(false)}>
             Categories
           </Link>
+          <Link to="/blogs" className="text-sm text-white" onClick={() => setMenuOpen(false)}>
+            Blogs
+          </Link>
+          <Link to="/news" className="text-sm text-white" onClick={() => setMenuOpen(false)}>
+            News
+          </Link>
           {user ? (
             <>
-              <Link to="/create" className="text-sm text-white" onClick={() => setMenuOpen(false)}>
+              {/* Hidden to match the desktop nav — see note there */}
+              <Link to="/create" className="hidden text-sm text-white" onClick={() => setMenuOpen(false)}>
                 Write
               </Link>
               <Link

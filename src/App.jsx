@@ -18,6 +18,7 @@ import Notifications from "./pages/Notifications";
 import EditPost from "./pages/EditPost";
 import Categories from "./pages/Categories";
 import CategoryPosts from "./pages/CategoryPosts";
+import ResourceList from "./pages/ResourceList";
 import PublicProfile from "./pages/PublicProfile";
 import Settings from  "./pages/Settings";
 import ScrollToTop from "./components/common/ScrollToTop";
@@ -99,6 +100,9 @@ function App() {
             />
             <Route path="/categories" element={<Categories />} />
             <Route path="/category/:slug" element={<CategoryPosts />} />
+            {/* Resource Center — same component, different postType filter */}
+            <Route path="/blogs" element={<ResourceList type="blog" />} />
+            <Route path="/news" element={<ResourceList type="news" />} />
 
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
