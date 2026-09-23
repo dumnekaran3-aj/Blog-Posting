@@ -1,34 +1,93 @@
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Mail, Lock } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import MediaUploader from "../components/editor/MediaUploader";
-import FormatToolbar from "../components/editor/FormatToolbar";
+import AdminRichEditor from "../components/editor/AdminRichEditor";
 import { categories } from "../constants/categories";
+import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
+
+const SUPPORT_EMAIL = "support@varitywire.com";
+
+// Normal ('user' role) accounts get exactly one free post — moderators/
+// analysts/admins are unrestricted. Backend enforces this for real
+// (Post.controller.js createPost); this pre-check just avoids making
+// someone fill out the whole form before finding out they can't publish.
+// Beyond the free post, more posts only happen through the admin panel now
+// (an admin creating/crediting a post to that user via postAuthor) — that's
+// why this prompt points to support instead of any kind of "upgrade" flow.
+function FreeLimitPrompt() {
+  return (
+    <div className="flex-1 max-w-md mx-auto w-full px-6 py-20 text-center">
+      <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+        <Lock size={20} />
+      </div>
+      <h1 className="text-lg font-medium text-textDark mb-2">You've used your free post</h1>
+      <p className="text-sm text-textMuted mb-6">
+        Every account gets one free post on VarityWire. To publish more, please get in touch with
+        our support team and we'll help you out.
+      </p>
+      <div className="bg-white border border-borderClr rounded-xl p-5 text-left flex flex-col gap-1 mb-6">
+        <p className="text-xs text-textMuted">Contact</p>
+        <p className="text-sm font-medium text-textDark">VarityWire Support Team</p>
+        <p className="text-xs text-textMuted">varitywire.com</p>
+      </div>
+      <a
+        href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Request to publish more posts")}`}
+        className="inline-flex items-center gap-2 bg-primary text-white text-sm px-5 py-2.5 rounded-md hover:bg-primary/90"
+      >
+        <Mail size={15} /> Email {SUPPORT_EMAIL}
+      </a>
+    </div>
+  );
+}
 
 const mediaTypes = ["text", "image", "video", "audio"];
 
-// Matches the server-side limit exactly (models/Post.model.js maxlength +
-// middleware/validators.js) — 20,000 chars ≈ 3,000–4,000 words, generous
-// for a long post while keeping a hard ceiling so nothing near-unbounded
-// ever gets typed, stored, or shipped in every feed response.
+// Matches the server-side limit exactly (models/Post.model.js maxlength) —
+// 20,000 chars ≈ 3,000–4,000 words. This now measures the actual HTML
+// markup length (post-sanitization on the server), same as the admin
+// panel's editor, since both write through the same rich-text editor.
 const MAX_CONTENT_LENGTH = 20000;
 
 export default function CreatePost() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [form, setForm] = useState({
     title: "",
     content: "",
-    textStyle: "normal",
     mediaType: "text",
     mediaUrl: "",
     category: categories[0].value,
   });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  const textareaRef = useRef(null);
+  const [checkingLimit, setCheckingLimit] = useState(true);
+  const [limitReached, setLimitReached] = useState(false);
+
+  useEffect(() => {
+    // Moderators/analysts/admins are never limited — only plain 'user' accounts
+    if (user?.role !== "user") {
+      setCheckingLimit(false);
+      return;
+    }
+
+    const checkEligibility = async () => {
+      try {
+        const { data } = await api.get("/posts/mine");
+        setLimitReached((data.posts || []).length >= 1);
+      } catch (err) {
+        // If this check itself fails, fall through to the form — the
+        // backend still enforces the real limit on submit either way
+      } finally {
+        setCheckingLimit(false);
+      }
+    };
+    checkEligibility();
+  }, [user?.role]);
 
   const handleMediaTypeChange = (type) => {
     // media type badalte hi purani uploaded file clear kar do — mismatch avoid karne ke liye
@@ -43,7 +102,9 @@ export default function CreatePost() {
       return;
     }
     if (form.content.length > MAX_CONTENT_LENGTH) {
-      setError(`Content is too long — ${form.content.length.toLocaleString()} / ${MAX_CONTENT_LENGTH.toLocaleString()} characters. Please shorten it before publishing.`);
+      setError(
+        `Content is too long — ${form.content.length.toLocaleString()} / ${MAX_CONTENT_LENGTH.toLocaleString()} characters. Please shorten it before publishing.`
+      );
       return;
     }
     if (form.mediaType !== "text" && !form.mediaUrl) {
@@ -53,14 +114,43 @@ export default function CreatePost() {
 
     setSaving(true);
     try {
-      const { data } = await api.post("/posts", { ...form, status });
+      const { data } = await api.post("/posts", { ...form, contentFormat: "html", status });
       navigate(`/blog/${data.post.slug}`);
     } catch (err) {
-      setError(err.response?.data?.msg || "Something went wrong. Please try again.");
+      if (err.response?.data?.code === "FREE_LIMIT_REACHED") {
+        // Backend is the real source of truth — if the frontend's own
+        // pre-check somehow missed this (stale state, race condition),
+        // flip to the same prompt the pre-check would have shown
+        setLimitReached(true);
+      } else {
+        setError(err.response?.data?.msg || "Something went wrong. Please try again.");
+      }
     } finally {
       setSaving(false);
     }
   };
+
+  if (checkingLimit) {
+    return (
+      <div className="min-h-screen flex flex-col bg-bgLight">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-sm text-textMuted">Loading...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (limitReached) {
+    return (
+      <div className="min-h-screen flex flex-col bg-bgLight">
+        <Navbar />
+        <FreeLimitPrompt />
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-bgLight">
@@ -125,61 +215,21 @@ export default function CreatePost() {
           )}
 
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs text-textMuted block">Content</label>
+            <label className="text-xs text-textMuted mb-1 block">Content</label>
 
-              {/* Whole-post text style — persists with the post, applied
-                  consistently on the feed card and the full post page.
-                  Just 3 fixed states, not rich text, so there's no markup
-                  to sanitize and no injection surface. */}
-              <div className="flex gap-1">
-                {[
-                  { value: "normal", label: "Normal" },
-                  { value: "bold", label: "Bold" },
-                  { value: "italic", label: "Italic" },
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setForm({ ...form, textStyle: opt.value })}
-                    className={`text-[11px] px-2.5 py-1 rounded-md border transition-colors ${
-                      form.textStyle === opt.value
-                        ? "bg-primary text-white border-primary"
-                        : "text-textMuted border-borderClr hover:border-primary/40"
-                    } ${opt.value === "bold" ? "font-bold" : opt.value === "italic" ? "italic" : ""}`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-1.5">
-              <FormatToolbar
-                textareaRef={textareaRef}
-                content={form.content}
-                onChange={(val) => setForm((prev) => ({ ...prev, content: val }))}
-              />
-            </div>
-
-            <textarea
-              ref={textareaRef}
-              value={form.content}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
-              placeholder="Write your post..."
-              rows={10}
-              className={`w-full text-sm border rounded-md px-3 py-2 outline-none bg-white resize-none ${
-                form.content.length > MAX_CONTENT_LENGTH
-                  ? "border-danger focus:border-danger"
-                  : "border-borderClr focus:border-primary"
-              } ${form.textStyle === "bold" ? "font-bold" : form.textStyle === "italic" ? "italic" : ""}`}
-            />
+            {/* Same rich-text editor the admin panel uses — bold, italic,
+                underline, headings, lists, links, tables, images, charts.
+                Saved as sanitized HTML (server strips anything outside its
+                whitelist regardless of what this editor actually produced). */}
+            <AdminRichEditor content={form.content} onChange={(html) => setForm({ ...form, content: html })} />
 
             <div className="flex items-center justify-between mt-1">
-              <p className={`text-[11px] ${form.content.length > MAX_CONTENT_LENGTH ? "text-danger font-medium" : "text-textMuted"}`}>
+              <p
+                className={`text-[11px] ${
+                  form.content.length > MAX_CONTENT_LENGTH ? "text-danger font-medium" : "text-textMuted"
+                }`}
+              >
                 {form.content.length.toLocaleString()} / {MAX_CONTENT_LENGTH.toLocaleString()} characters
-                {" · "}
-                {form.content.split("\n").length.toLocaleString()} lines
               </p>
               {form.content.length > MAX_CONTENT_LENGTH && (
                 <p className="text-[11px] text-danger font-medium">

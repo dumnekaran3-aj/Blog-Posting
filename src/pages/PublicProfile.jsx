@@ -11,7 +11,7 @@ import { categories as allCategories } from "../constants/categories";
 import api from "../services/api";
 
 export default function PublicProfile() {
-  const { id } = useParams();
+  const { username } = useParams();
   const { user: currentUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -26,13 +26,17 @@ export default function PublicProfile() {
     const fetchProfile = async () => {
       setLoading(true);
       try {
-        const [profileRes, postsRes] = await Promise.all([
-          api.get(`/users/${id}`),
-          api.get("/posts", { params: { author: id } }),
-        ]);
-        setProfile(profileRes.data.user);
-        setIsFollowing(profileRes.data.isFollowing);
-        setIsSelf(profileRes.data.isSelf);
+        // Profile pehle username se fetch hota hai (clean public URL, koi
+        // raw DB id URL mein nahi), phir usme mila hua ASLI Mongo _id
+        // internal API calls (posts list, follow toggle) ke liye use hota
+        // hai — wo internal calls URL mein kabhi visible nahi hote, isliye
+        // wahan id use karna koi security concern nahi hai.
+        const { data: profileData } = await api.get(`/users/username/${username}`);
+        const postsRes = await api.get("/posts", { params: { author: profileData.user.id } });
+
+        setProfile(profileData.user);
+        setIsFollowing(profileData.isFollowing);
+        setIsSelf(profileData.isSelf);
         setPosts(postsRes.data.posts || []);
       } catch (err) {
         setProfile(null);
@@ -41,7 +45,7 @@ export default function PublicProfile() {
       }
     };
     fetchProfile();
-  }, [id]);
+  }, [username]);
 
   const handleFollowToggle = async () => {
     if (!currentUser) return; // Navbar sign-in flow handles this; button is hidden if logged out anyway
@@ -56,7 +60,7 @@ export default function PublicProfile() {
     }));
 
     try {
-      const { data } = await api.post(`/users/${id}/follow`);
+      const { data } = await api.post(`/users/${profile.id}/follow`);
       setIsFollowing(data.following);
     } catch (err) {
       // revert on failure
@@ -193,7 +197,7 @@ export default function PublicProfile() {
       )}
 
       {followModalType && (
-        <FollowListModal userId={id} type={followModalType} onClose={() => setFollowModalType(null)} />
+        <FollowListModal userId={profile?.id} type={followModalType} onClose={() => setFollowModalType(null)} />
       )}
 
       <Footer />

@@ -91,7 +91,7 @@ export default function Notifications() {
           <div className="bg-white border border-borderClr rounded-xl overflow-hidden">
             {notifications.map((notif) => {
               const { Icon, color } = typeIcon[notif.type] || typeIcon.like;
-              const linkTo = notif.post?.slug ? `/blog/${notif.post.slug}` : `/profile/${notif.sender?._id}`;
+              const linkTo = notif.post?.slug ? `/blog/${notif.post.slug}` : `/profile/${notif.sender?.username}`;
 
               return (
                 <Link

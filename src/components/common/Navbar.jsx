@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Search, X, Menu, PenSquare, LogOut, ChevronDown, BookOpen } from "lucide-react";
+import { Search, X, Menu, SquarePen, ChevronDown, BookOpen } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { primaryCategories, moreCategories, categorySlug } from "../../constants/categories";
@@ -132,16 +132,6 @@ export default function Navbar() {
 
             {user ? (
               <>
-                {/* Write — hidden for now (client request), intentionally
-                    kept in the code so it can be switched back on by
-                    removing the `hidden` class. /create route still works. */}
-                <Link
-                  to="/create"
-                  className="hidden items-center gap-1.5 bg-primary text-white text-sm px-4 py-1.5 rounded-md hover:bg-primary/90 transition-colors"
-                >
-                  <PenSquare size={14} /> Write
-                </Link>
-
                 <div
                   className="relative"
                   onMouseEnter={() => setResourceOpen(true)}
@@ -186,13 +176,20 @@ export default function Navbar() {
                   )}
                   <span className="text-sm font-bold">{user.name}</span>
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  aria-label="Sign out"
-                  className="text-white/80 hover:text-white"
+                {/* Direct one-click logout hataya gaya — accidentally click
+                    hone ka risk tha, aur Settings page mein already ek
+                    proper (confirm-worthy) logout button hai. Iski jagah
+                    ek clean "create post" icon diya hai — same intent jo
+                    admin panel mein post-create ke liye hota hai, bas
+                    normal user ke liye chota, classic icon-only button. */}
+                <Link
+                  to="/create"
+                  aria-label="Write a new post"
+                  title="Write a new post"
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
                 >
-                  <LogOut size={16} />
-                </button>
+                  <SquarePen size={15} />
+                </Link>
               </>
             ) : (
               <>
@@ -261,9 +258,12 @@ export default function Navbar() {
           </Link>
           {user ? (
             <>
-              {/* Hidden to match the desktop nav — see note there */}
-              <Link to="/create" className="hidden text-sm text-white" onClick={() => setMenuOpen(false)}>
-                Write
+              <Link
+                to="/create"
+                className="flex items-center gap-2 text-sm text-white"
+                onClick={() => setMenuOpen(false)}
+              >
+                <SquarePen size={15} /> Write
               </Link>
               <Link
                 to="/dashboard"

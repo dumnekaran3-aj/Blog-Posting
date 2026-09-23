@@ -83,8 +83,8 @@ export default function PostCard({ post }) {
           <Lightbox src={author?.avatar} alt={author?.name} onClose={() => setAuthorLightboxOpen(false)} />
         )}
         <p className="text-xs">
-          <Link
-            to={`/profile/${author?._id || author?.id}`}
+                   <Link
+            to={`/profile/${author?.username}`}
             className="font-medium text-primary hover:underline"
           >
             {author?.name || "Unknown"}

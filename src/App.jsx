@@ -64,7 +64,7 @@ function App() {
             <Route path="/disclaimer" element={<Disclaimer />} />
             <Route path="/corrections-policy" element={<CorrectionsPolicy />} />
             <Route path="/write-for-us" element={<WriteForUs />} />
-            <Route path="/profile/:id" element={<PublicProfile />} />
+        <Route path="/profile/:username" element={<PublicProfile />} />
 
             <Route
               path="/dashboard"

@@ -54,7 +54,7 @@ function Avatar({ user, size = 32 }) {
 // replies. Author avatar + name are always clickable through to their
 // profile page.
 function CommentBubble({ comment, size = 32, onReplyClick, isOwner, onDelete }) {
-  const profileTo = `/profile/${comment.author?._id || comment.author?.id}`;
+  const profileTo = `/profile/${comment.author?.username}`;
 
   return (
     <div className="flex items-start gap-2">

@@ -270,7 +270,7 @@ export default function BlogDetail() {
                   onClose={() => setAuthorLightboxOpen(false)}
                 />
               )}
-              <Link to={`/profile/${post.author?._id || post.author?.id}`} className="hover:text-primary">
+              <Link to={`/profile/${post.author?.username}`} className="hover:text-primary">
                 By {post.author?.name || "Unknown"}
               </Link>
               <span>&middot;</span>
