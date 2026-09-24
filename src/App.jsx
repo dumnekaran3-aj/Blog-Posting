@@ -15,7 +15,6 @@ import CreatePost from "./pages/CreatePost";
 import PrivateRoute from "./routes/PrivateRoute";
 import Dashboard from "./pages/Dashboard";
 import Notifications from "./pages/Notifications";
-import EditPost from "./pages/EditPost";
 import Categories from "./pages/Categories";
 import CategoryPosts from "./pages/CategoryPosts";
 import ResourceList from "./pages/ResourceList";
@@ -94,7 +93,7 @@ function App() {
               path="/edit/:id"
               element={
                 <PrivateRoute>
-                  <EditPost />
+                  <CreatePost />
                 </PrivateRoute>
               }
             />

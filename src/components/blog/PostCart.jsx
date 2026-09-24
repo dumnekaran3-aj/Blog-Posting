@@ -5,7 +5,7 @@ import LikeButton from "./LikeButton";
 import ShareButton from "./ShareButton";
 import Lightbox from "../common/Lightbox";
 import renderPostContent, { renderPostPreview } from "../../utils/renderPostContent";
-import { htmlToPreviewText } from "../../utils/renderHtmlPostContent";
+import { htmlToPreviewText, looksLikeHtml } from "../../utils/renderHtmlPostContent";
 
 const categoryStyles = {
   default: "bg-textMuted/10 text-textMuted",
@@ -55,8 +55,15 @@ export default function PostCard({ post }) {
   const resolvedTextStyle = textStyle || "bold";
   const textStyleClass = resolvedTextStyle === "italic" ? "italic" : resolvedTextStyle === "normal" ? "" : "font-bold";
 
-  const trimmedContent =
-    contentFormat === "html" ? htmlToPreviewText(content) : (content || "").trim();
+  // Trust contentFormat when it says "html", but don't trust it blindly
+  // when it doesn't — some rows predate contentFormat being tracked
+  // consistently on every write path, so a post can have real HTML in
+  // `content` with a stale/missing contentFormat. Detecting an actual tag
+  // is the fallback that keeps those posts from showing raw "<h2>..."
+  // text in the feed (see utils/renderHtmlPostContent.jsx).
+  const isHtmlContent = contentFormat === "html" || looksLikeHtml(content);
+
+  const trimmedContent = isHtmlContent ? htmlToPreviewText(content) : (content || "").trim();
   const isLong = trimmedContent.length > PREVIEW_CHAR_THRESHOLD;
 
   return (
@@ -211,7 +218,7 @@ export default function PostCard({ post }) {
                 expanded ? "" : "line-clamp-3"
               }`}
             >
-              {contentFormat === "html" ? trimmedContent : renderPostPreview(trimmedContent)}
+              {isHtmlContent ? trimmedContent : renderPostPreview(trimmedContent)}
             </p>
             {isLong && (
               <button

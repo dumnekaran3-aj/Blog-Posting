@@ -23,6 +23,24 @@ const PURIFY_CONFIG = {
   ALLOWED_URI_REGEXP: /^(?:https?:)?\/\//i, // blocks javascript:, data:, etc.
 };
 
+// looksLikeHtml
+// ---------------
+// Defensive fallback for posts whose stored `contentFormat` doesn't match
+// what's actually in `content` (e.g. older rows saved before every write
+// path consistently set contentFormat, or a post edited through a path
+// that didn't send it). Every caller should use this as an OR alongside
+// the `contentFormat === "html"` check — never as a replacement for it —
+// so a real HTML post never gets shown as raw "<h2>...</h2>" text just
+// because its DB field is stale/missing. A cheap regex test for an actual
+// tag is enough here; this only decides WHICH renderer to use, the real
+// security boundary is still DOMPurify/sanitize-html on the HTML path.
+const HTML_TAG_PATTERN = /<\/?(p|br|strong|em|u|s|span|h1|h2|h3|ul|ol|li|blockquote|a|table|thead|tbody|tr|th|td|img|chart-embed)\b[^>]*>/i;
+
+export function looksLikeHtml(text) {
+  if (!text || typeof text !== 'string') return false;
+  return HTML_TAG_PATTERN.test(text);
+}
+
 export default function renderHtmlPostContent(rawHtml) {
   if (!rawHtml) return null;
 

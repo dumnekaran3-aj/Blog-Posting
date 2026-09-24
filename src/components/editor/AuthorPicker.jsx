@@ -3,7 +3,11 @@ import { Plus, X } from "lucide-react";
 import MediaUploader from "./MediaUploader";
 import adminApi from "../../services/adminApi";
 
-export default function AuthorPicker({ value, onChange }) {
+// apiClient/endpoint are configurable so the SAME component/UI works in
+// both places that now offer this facility:
+//   - admin panel (AdminCreatePost.jsx)  -> adminApi + /admin/authors (default, unchanged)
+//   - regular one-free-post form (CreatePost.jsx) -> api + /authors
+export default function AuthorPicker({ value, onChange, apiClient = adminApi, endpoint = "/admin/authors" }) {
   const [authors, setAuthors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -14,7 +18,7 @@ export default function AuthorPicker({ value, onChange }) {
   const loadAuthors = async () => {
     setLoading(true);
     try {
-      const { data } = await adminApi.get("/admin/authors");
+      const { data } = await apiClient.get(endpoint);
       setAuthors(data.authors || []);
     } catch {
       setAuthors([]);
@@ -25,7 +29,8 @@ export default function AuthorPicker({ value, onChange }) {
 
   useEffect(() => {
     loadAuthors();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endpoint]);
 
   const handleCreate = async () => {
     setError("");
@@ -35,7 +40,7 @@ export default function AuthorPicker({ value, onChange }) {
     }
     setSaving(true);
     try {
-      const { data } = await adminApi.post("/admin/authors", newAuthor);
+      const { data } = await apiClient.post(endpoint, newAuthor);
       setAuthors((prev) => [...prev, data.author].sort((a, b) => a.name.localeCompare(b.name)));
       onChange(data.author._id);
       setCreating(false);
