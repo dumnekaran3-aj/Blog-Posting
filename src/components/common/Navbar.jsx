@@ -30,7 +30,7 @@ export default function Navbar() {
 
   return (
     <header className="bg-primaryDark sticky top-0 z-40">
-      <nav className="max-w-6xl mx-auto flex items-center justify-between px-6 py-3">
+      <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
         <Link to="/" className="flex items-center">
           <img src={logo} alt="VarityWire" className="h-10 w-auto" />
         </Link>

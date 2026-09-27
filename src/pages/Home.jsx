@@ -1,6 +1,22 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Search, Sparkles } from "lucide-react";
+import {
+  Search,
+  Sparkles,
+  TrendingUp,
+  Newspaper,
+  Microscope,
+  Briefcase,
+  GraduationCap,
+  Bot,
+  Globe2,
+  Brain,
+  Mic,
+  BookOpen,
+  PenLine,
+  BarChart3,
+  Tag,
+} from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import PostCard from "../components/blog/PostCart";
@@ -9,14 +25,33 @@ import { useAuth } from "../context/AuthContext";
 import { categories as allCategories, categorySlug } from "../constants/categories";
 import api from "../services/api";
 
-const categories = ["Marketing", "Design", "Tech", "Lifestyle"];
+// One classic icon + one accent tint per category — keyed by the exact
+// value string (constants/categories.js), not by array position, so this
+// stays correct even if that list gets reordered later. Each category
+// gets its own color so the card reads as a set of distinct sections
+// rather than one flat list — that's the "vibe" a plain text list was
+// missing. Falls back to a neutral Tag icon for any category added later
+// that isn't in this map yet.
+const CATEGORY_STYLE = {
+  "Latest News & Updates": { icon: Newspaper, tint: "bg-sky-50 text-sky-600" },
+  "Research & Reports": { icon: Microscope, tint: "bg-violet-50 text-violet-600" },
+  "Business": { icon: Briefcase, tint: "bg-amber-50 text-amber-600" },
+  "Education": { icon: GraduationCap, tint: "bg-emerald-50 text-emerald-600" },
+  "Technology & AI": { icon: Bot, tint: "bg-indigo-50 text-indigo-600" },
+  "World": { icon: Globe2, tint: "bg-cyan-50 text-cyan-600" },
+  "Expert Opinions": { icon: Brain, tint: "bg-rose-50 text-rose-600" },
+  "Interviews": { icon: Mic, tint: "bg-orange-50 text-orange-600" },
+  "Magazine Features": { icon: BookOpen, tint: "bg-teal-50 text-teal-600" },
+  "Guest Posts": { icon: PenLine, tint: "bg-fuchsia-50 text-fuchsia-600" },
+  "Trends & Insights": { icon: BarChart3, tint: "bg-blue-50 text-blue-600" },
+};
+const DEFAULT_CATEGORY_STYLE = { icon: Tag, tint: "bg-slate-100 text-slate-500" };
 
 export default function Home() {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState(null);
   // Navbar search button lands here with ?search=<query> — pick that up as
   // the initial value so results show immediately instead of an empty box.
   const [searchInput, setSearchInput] = useState(searchParams.get("search") || "");
@@ -24,6 +59,10 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [suggestedPosts, setSuggestedPosts] = useState([]);
+  // Only true when suggestedPosts is actually personalized (matched to the
+  // user's interests) — drives whether the sidebar section reads "Suggested
+  // for you" or falls back to "Trending now".
+  const [isPersonalized, setIsPersonalized] = useState(false);
 
   // Debounce — waits 400ms after the user stops typing before updating `search`.
   // Avoids firing an API call on every single keystroke.
@@ -40,19 +79,17 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
-  // Filter (category/search) badalte hi page 1 pe wapas — warna user kisi
-  // filter change ke baad bhi purane page number pe atka reh sakta hai jahan
-  // naye filter ke hisaab se posts hi na ho
+  // Search changing resets to page 1 — warna user kisi search ke baad bhi
+  // purane page number pe atka reh sakta hai jahan naye results hi na ho
   useEffect(() => {
     setPage(1);
-  }, [activeCategory, search]);
+  }, [search]);
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         setLoading(true);
         const params = { page };
-        if (activeCategory) params.category = activeCategory;
         if (search) params.search = search;
 
         const { data } = await api.get("/posts", { params });
@@ -65,23 +102,35 @@ export default function Home() {
       }
     };
     fetchPosts();
-  }, [activeCategory, search, page]);
+  }, [search, page]);
 
-  // "Popular categories" ke neeche jo empty space tha, wahan user ke apne
-  // interests (Settings/Dashboard mein set kiye hue) ke hisaab se suggested
-  // posts dikhate hain — chhoti list, direct click se seedha post khulta
-  // hai, koi "Show more" nahi (bas ek quick discovery list hai).
+  // Sidebar "Suggested for you" — personalized to the user's interests
+  // (Settings/Dashboard mein set kiye hue) when they have any set.
+  // Otherwise (guest, or a user with no interests picked yet) falls back
+  // to a general trending list, so this section is never just empty —
+  // that empty space was exactly what made the page feel sparse.
   useEffect(() => {
     const interests = user?.interests || [];
+
+    const fetchTrending = async () => {
+      try {
+        const { data } = await api.get("/posts", { params: { limit: 6 } });
+        setSuggestedPosts(data.posts || []);
+        setIsPersonalized(false);
+      } catch (err) {
+        setSuggestedPosts([]);
+      }
+    };
+
     if (interests.length === 0) {
-      setSuggestedPosts([]);
+      fetchTrending();
       return;
     }
 
     const fetchSuggestions = async () => {
       try {
         // Har interest se thode-thode posts le lete hain (max 3 categories
-        // taaki zyada parallel calls na ho), fir merge+dedupe karke top 5
+        // taaki zyada parallel calls na ho), fir merge+dedupe karke top 6
         // dikha dete hain — isse variety milti hai sirf ek category tak
         // simit rehne ke bajaye
         const requests = interests
@@ -100,7 +149,14 @@ export default function Home() {
           });
         });
 
+        if (merged.length === 0) {
+          // Interests set, but nothing matched them right now — trending
+          // fallback rather than an empty section
+          await fetchTrending();
+          return;
+        }
         setSuggestedPosts(merged.slice(0, 6));
+        setIsPersonalized(true);
       } catch (err) {
         setSuggestedPosts([]);
       }
@@ -117,7 +173,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-bgLight">
       <Navbar />
 
-      <section className="max-w-6xl mx-auto w-full px-6 pt-8 pb-4">
+      <section className="max-w-7xl mx-auto w-full px-6 pt-8 pb-4">
         <h1 className="text-2xl font-medium text-textDark mb-1">
           Ideas worth sharing
         </h1>
@@ -126,7 +182,7 @@ export default function Home() {
         </p>
       </section>
 
-      <section className="max-w-6xl mx-auto w-full px-6 pb-10 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-6">
+      <section className="max-w-7xl mx-auto w-full px-6 pb-10 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-6 items-start">
         {/* Post feed — single column, full width. Ek post ke niche doosri
             post aati hai (pehle 2-column grid tha, ab har post apni poori
             available width leti hai — jo pehle 2 posts milke leti thi) */}
@@ -138,7 +194,7 @@ export default function Home() {
 
             {!loading && posts.length === 0 && (
               <p className="text-sm text-textMuted">
-                {search || activeCategory
+                {search
                   ? "No posts match your search."
                   : "No posts yet. Be the first to publish one."}
               </p>
@@ -153,8 +209,15 @@ export default function Home() {
           )}
         </div>
 
-        {/* Sidebar */}
-        <aside className="flex flex-col gap-4">
+        {/* Sidebar — sticky + scrolls independently of the post feed on
+            desktop (`items-start` on the grid above stops it stretching to
+            match the feed's height, `md:sticky` pins it under the navbar,
+            and its own max-height + overflow-y-auto means if its content
+            ever runs taller than the viewport, THAT scrolls on its own
+            rather than growing the page). Plain stacked block on mobile —
+            sticky doesn't make sense once the sidebar is below the feed
+            instead of beside it. */}
+        <aside className="flex flex-col gap-4 md:sticky md:top-20 md:max-h-[calc(100vh-6rem)] md:overflow-y-auto md:pb-2">
           <div className="bg-white border border-borderClr rounded-xl px-3 py-2 flex items-center gap-2">
             <Search size={15} className="text-textMuted" />
             <input
@@ -166,55 +229,51 @@ export default function Home() {
             />
           </div>
 
+          {/* All categories — poore list ka apna page hai (/category/:slug);
+              har category ka apna icon chip + tint hai taaki card ek flat
+              text list na lage, balki ek curated directory jaisa lage */}
           <div className="bg-white border border-borderClr rounded-xl p-4">
-            <p className="text-sm font-medium text-textDark mb-3">
-              Popular categories
-            </p>
-            <div className="flex flex-col gap-1">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() =>
-                    setActiveCategory(activeCategory === cat ? null : cat)
-                  }
-                  className={`text-left text-sm px-3 py-2 rounded-md transition-colors ${
-                    activeCategory === cat
-                      ? "bg-primary/10 text-primaryDark font-medium"
-                      : "text-slate-600 hover:bg-primary/5 hover:text-primary"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+            <p className="text-sm font-medium text-textDark mb-1">All categories</p>
+            <p className="text-[11px] text-textMuted mb-3">Browse posts by topic</p>
+            <div className="flex flex-col">
+              {allCategories.map((cat) => {
+                const { icon: Icon, tint } = CATEGORY_STYLE[cat.value] || DEFAULT_CATEGORY_STYLE;
+                return (
+                  <Link
+                    key={cat.value}
+                    to={`/category/${categorySlug(cat.value)}`}
+                    className="group flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-bgLight transition-colors"
+                  >
+                    <span className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${tint}`}>
+                      <Icon size={15} strokeWidth={2} />
+                    </span>
+                    <span className="text-[13px] text-slate-700 font-medium group-hover:text-primary transition-colors">
+                      {cat.value}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
-          {/* All categories — "Popular categories" upar sirf 4 shortcuts hain
-              jo feed ko inline filter karte hain; ye poori list hai jo har
-              category ke apne page pe le jaati hai */}
-          <div className="bg-white border border-borderClr rounded-xl p-4">
-            <p className="text-sm font-medium text-textDark mb-3">All categories</p>
-            <div className="flex flex-col gap-1">
-              {allCategories.map((cat) => (
-                <Link
-                  key={cat.value}
-                  to={`/category/${categorySlug(cat.value)}`}
-                  className="text-sm px-3 py-2 rounded-md text-slate-600 hover:bg-primary/5 hover:text-primary transition-colors"
-                >
-                  {cat.value}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* Suggested posts — user ke interests ke hisaab se, direct click
-              se post khulta hai, koi excerpt/"Show more" nahi (quick discovery) */}
+          {/* Suggested / Trending — personalized when the user has interests
+              set, otherwise a trending fallback so this never sits empty.
+              2-column thumbnail grid (was a single tall column) so it fills
+              the sidebar's width properly instead of leaving it narrow. */}
           {suggestedPosts.length > 0 && (
             <div className="bg-white border border-borderClr rounded-xl p-4">
               <p className="flex items-center gap-1.5 text-sm font-medium text-textDark mb-4">
-                <Sparkles size={15} className="text-primary" /> Suggested for you
+                {isPersonalized ? (
+                  <>
+                    <Sparkles size={15} className="text-primary" /> Suggested for you
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp size={15} className="text-primary" /> Trending now
+                  </>
+                )}
               </p>
-              <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 {suggestedPosts.map((post) => (
                   <Link
                     key={post._id}
@@ -225,18 +284,18 @@ export default function Home() {
                       <img
                         src={post.thumbnail || post.mediaUrl}
                         alt={post.title}
-                        className="w-full h-32 object-cover rounded-lg"
+                        className="w-full h-20 object-cover rounded-lg"
                       />
                     ) : (
-                      <div className="w-full h-32 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-2xl font-medium">
+                      <div className="w-full h-20 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-lg font-medium">
                         {post.category?.charAt(0).toUpperCase() || "P"}
                       </div>
                     )}
                     <div className="pt-2 px-0.5 pb-1">
-                      <p className="text-[10px] uppercase tracking-wide text-primary font-medium mb-1">
+                      <p className="text-[9px] uppercase tracking-wide text-primary font-medium mb-1">
                         {post.category}
                       </p>
-                      <p className="text-sm text-textDark font-medium line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+                      <p className="text-xs text-textDark font-medium line-clamp-2 leading-snug group-hover:text-primary transition-colors">
                         {post.title}
                       </p>
                     </div>

@@ -14,7 +14,7 @@ const legalLinks = [
 export default function Footer() {
   return (
     <footer className="bg-primaryDark mt-auto">
-      <div className="max-w-6xl mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-3">
           <div>
             <p className="text-white text-sm font-medium">VarityWire</p>
