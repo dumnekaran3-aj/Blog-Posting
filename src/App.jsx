@@ -30,6 +30,7 @@ import EditorialPolicy from "./pages/legal/EditorialPolicy";
 import Disclaimer from "./pages/legal/Disclaimer";
 import CorrectionsPolicy from "./pages/legal/CorrectionsPolicy";
 import WriteForUs from "./pages/legal/WriteForUs";
+import AdminPostRequests from "./pages/admin/AdminPostRequests";
 
 import AdminPrivateRoute from "./routes/AdminPrivateRoute";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -153,7 +154,10 @@ function App() {
               <Route path="categories" element={<AdminCategories />} />
               <Route path="logs" element={<AdminAuditLogs />} />
               <Route path="accounts" element={<AdminAccounts />} />
+                <Route path="post-requests" element={<AdminPostRequests />} />
             </Route>
+
+          
 
             {/* Catch-all — koi bhi galat/anjaan URL (jaise "/admin" agar wo
                 tumhara asli configured ADMIN_PATH nahi hai) ab BLANK page

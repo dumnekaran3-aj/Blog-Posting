@@ -1,49 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Mail, Lock } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import MediaUploader from "../components/editor/MediaUploader";
 import AdminRichEditor from "../components/editor/AdminRichEditor";
 import AuthorPicker from "../components/editor/AuthorPicker";
+import RequestMorePosts from "../components/post/RequestMorePosts";
 import { categories, postTypes } from "../constants/categories";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-
-const SUPPORT_EMAIL = "support@varitywire.com";
-
-// Normal ('user' role) accounts get exactly one free post — moderators/
-// analysts/admins are unrestricted. Backend enforces this for real
-// (Post.controller.js createPost); this pre-check just avoids making
-// someone fill out the whole form before finding out they can't publish.
-// Beyond the free post, more posts only happen through the admin panel now
-// (an admin creating/crediting a post to that user via postAuthor) — that's
-// why this prompt points to support instead of any kind of "upgrade" flow.
-function FreeLimitPrompt() {
-  return (
-    <div className="flex-1 max-w-md mx-auto w-full px-6 py-20 text-center">
-      <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
-        <Lock size={20} />
-      </div>
-      <h1 className="text-lg font-medium text-textDark mb-2">You've used your free post</h1>
-      <p className="text-sm text-textMuted mb-6">
-        Every account gets one free post on VarityWire. To publish more, please get in touch with
-        our support team and we'll help you out.
-      </p>
-      <div className="bg-white border border-borderClr rounded-xl p-5 text-left flex flex-col gap-1 mb-6">
-        <p className="text-xs text-textMuted">Contact</p>
-        <p className="text-sm font-medium text-textDark">VarityWire Support Team</p>
-        <p className="text-xs text-textMuted">varitywire.com</p>
-      </div>
-      <a
-        href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Request to publish more posts")}`}
-        className="inline-flex items-center gap-2 bg-primary text-white text-sm px-5 py-2.5 rounded-md hover:bg-primary/90"
-      >
-        <Mail size={15} /> Email {SUPPORT_EMAIL}
-      </a>
-    </div>
-  );
-}
 
 const mediaTypes = ["text", "image", "video", "audio"];
 
@@ -77,7 +42,7 @@ const emptyForm = {
 // purely from whether a route param `id` is present. This gives regular
 // users the exact same create/edit facility as the admin panel (Basic
 // Info / Content / SEO tabs, Type, Category, Author picker, media
-// uploader, rich-text editor) while still keeping the free-post gate and
+// uploader, rich-text editor) while still keeping the post-limit gate and
 // public Navbar/Footer chrome that only this page needs.
 export default function CreatePost() {
   const navigate = useNavigate();
@@ -93,7 +58,7 @@ export default function CreatePost() {
   const [notFound, setNotFound] = useState(false);
 
   // Only relevant in create mode — editing an already-existing post is
-  // never blocked by the free-post limit, only creating a NEW one is.
+  // never blocked by the post limit, only creating a NEW one is.
   const [checkingLimit, setCheckingLimit] = useState(!isEditMode);
   const [limitReached, setLimitReached] = useState(false);
 
@@ -139,7 +104,11 @@ export default function CreatePost() {
     const checkEligibility = async () => {
       try {
         const { data } = await api.get("/posts/mine");
-        setLimitReached((data.posts || []).length >= 1);
+        // Compared against the user's own postLimit now (was hardcoded to
+        // 1) — matches Post.controller.js createPost's real check, so a
+        // user who's been granted extra posts doesn't get stopped here
+        // pre-emptively.
+        setLimitReached((data.posts || []).length >= (user?.postLimit ?? 1));
       } catch (err) {
         // If this check itself fails, fall through to the form — the
         // backend still enforces the real limit on submit either way
@@ -148,7 +117,7 @@ export default function CreatePost() {
       }
     };
     checkEligibility();
-  }, [isEditMode, user?.role]);
+  }, [isEditMode, user?.role, user?.postLimit]);
 
   const handleMediaTypeChange = (type) => {
     // media type badalte hi purani uploaded file clear kar do — mismatch avoid karne ke liye
@@ -218,7 +187,7 @@ export default function CreatePost() {
     return (
       <div className="min-h-screen flex flex-col bg-bgLight">
         <Navbar />
-        <FreeLimitPrompt />
+        <RequestMorePosts />
         <Footer />
       </div>
     );
@@ -245,7 +214,7 @@ export default function CreatePost() {
         <p className="text-xs text-textMuted mb-6">
           {isEditMode
             ? "Changes go live immediately if the post is already published."
-            : "This is your one free post on VarityWire — visible to readers immediately if you publish."}
+            : "Visible to readers immediately if you publish."}
         </p>
 
         <div className="bg-white border border-borderClr rounded-xl overflow-hidden">

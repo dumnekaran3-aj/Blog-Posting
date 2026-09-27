@@ -8,6 +8,7 @@ import {
   ScrollText,
   UserCog,
   LogOut,
+  Inbox,
 } from "lucide-react";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import { ADMIN_PATH } from "../../constants/adminPath";
@@ -17,6 +18,8 @@ const navItems = [
   { to: `/${ADMIN_PATH}`, label: "Overview", icon: LayoutDashboard, roles: ["admin", "moderator", "analyst"], end: true },
   { to: `/${ADMIN_PATH}/users`, label: "Users", icon: Users, roles: ["admin", "moderator"] },
   { to: `/${ADMIN_PATH}/posts`, label: "Posts", icon: FileText, roles: ["admin", "moderator"] },
+  // Super Admin only, per the post-request feature's access decision.
+  { to: `/${ADMIN_PATH}/post-requests`, label: "Post requests", icon: Inbox, roles: ["admin"] },
   { to: `/${ADMIN_PATH}/comments`, label: "Comments", icon: MessageSquare, roles: ["admin", "moderator"] },
   { to: `/${ADMIN_PATH}/categories`, label: "Categories", icon: Tags, roles: ["admin", "moderator", "analyst"] },
   { to: `/${ADMIN_PATH}/logs`, label: "Audit logs", icon: ScrollText, roles: ["admin"] },
