@@ -1,51 +1,14 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import {
-  Search,
-  Sparkles,
-  TrendingUp,
-  Newspaper,
-  Microscope,
-  Briefcase,
-  GraduationCap,
-  Bot,
-  Globe2,
-  Brain,
-  Mic,
-  BookOpen,
-  PenLine,
-  BarChart3,
-  Tag,
-} from "lucide-react";
+import { Search, Sparkles, TrendingUp } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import PostCard from "../components/blog/PostCart";
 import Pagination from "../components/common/Pagination";
 import { useAuth } from "../context/AuthContext";
 import { categories as allCategories, categorySlug } from "../constants/categories";
+import { CATEGORY_STYLE, DEFAULT_CATEGORY_STYLE } from "../constants/categoryIcons";
 import api from "../services/api";
-
-// One classic icon + one accent tint per category — keyed by the exact
-// value string (constants/categories.js), not by array position, so this
-// stays correct even if that list gets reordered later. Each category
-// gets its own color so the card reads as a set of distinct sections
-// rather than one flat list — that's the "vibe" a plain text list was
-// missing. Falls back to a neutral Tag icon for any category added later
-// that isn't in this map yet.
-const CATEGORY_STYLE = {
-  "Latest News & Updates": { icon: Newspaper, tint: "bg-sky-50 text-sky-600" },
-  "Research & Reports": { icon: Microscope, tint: "bg-violet-50 text-violet-600" },
-  "Business": { icon: Briefcase, tint: "bg-amber-50 text-amber-600" },
-  "Education": { icon: GraduationCap, tint: "bg-emerald-50 text-emerald-600" },
-  "Technology & AI": { icon: Bot, tint: "bg-indigo-50 text-indigo-600" },
-  "World": { icon: Globe2, tint: "bg-cyan-50 text-cyan-600" },
-  "Expert Opinions": { icon: Brain, tint: "bg-rose-50 text-rose-600" },
-  "Interviews": { icon: Mic, tint: "bg-orange-50 text-orange-600" },
-  "Magazine Features": { icon: BookOpen, tint: "bg-teal-50 text-teal-600" },
-  "Guest Posts": { icon: PenLine, tint: "bg-fuchsia-50 text-fuchsia-600" },
-  "Trends & Insights": { icon: BarChart3, tint: "bg-blue-50 text-blue-600" },
-};
-const DEFAULT_CATEGORY_STYLE = { icon: Tag, tint: "bg-slate-100 text-slate-500" };
 
 export default function Home() {
   const { user } = useAuth();

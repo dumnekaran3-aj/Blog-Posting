@@ -1,24 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bell, Heart, MessageCircle, UserPlus, CornerDownRight, Rss, X } from "lucide-react";
+import { Bell, X } from "lucide-react";
 import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
-
-const typeIcon = {
-  follow: { Icon: UserPlus, color: "text-primary" },
-  like: { Icon: Heart, color: "text-accent" },
-  comment: { Icon: MessageCircle, color: "text-secondary" },
-  reply: { Icon: CornerDownRight, color: "text-secondary" },
-  new_post: { Icon: Rss, color: "text-primary" },
-};
-
-const typeText = {
-  follow: "started following you",
-  like: "liked your post",
-  comment: "commented on your post",
-  reply: "replied to your comment",
-  new_post: "published a new post",
-};
+import { getNotificationView } from "../../constants/notificationMeta";
 
 export default function NotificationBell() {
   const { socket, unreadCount, setUnreadCount } = useAuth();
@@ -149,8 +134,7 @@ export default function NotificationBell() {
 
             {!loading &&
               notifications.map((notif) => {
-                const { Icon, color } = typeIcon[notif.type] || typeIcon.like;
-                const linkTo = notif.post?.slug ? `/blog/${notif.post.slug}` : `/profile/${notif.sender?.username}`;
+                const { Icon, color, text, senderLabel, detail, linkTo } = getNotificationView(notif);
 
                 return (
                   <Link
@@ -166,12 +150,9 @@ export default function NotificationBell() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs text-textDark">
-                        <span className="font-medium">{notif.sender?.name || "Someone"}</span>{" "}
-                        {typeText[notif.type] || "interacted with you"}
+                        <span className="font-medium">{senderLabel}</span> {text}
                       </p>
-                      {notif.post?.title && (
-                        <p className="text-[11px] text-textMuted truncate">{notif.post.title}</p>
-                      )}
+                      {detail && <p className="text-[11px] text-textMuted line-clamp-2">{detail}</p>}
                       <p className="text-[10px] text-textMuted mt-0.5">
                         {new Date(notif.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                       </p>

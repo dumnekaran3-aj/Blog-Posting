@@ -103,12 +103,15 @@ export default function CreatePost() {
 
     const checkEligibility = async () => {
       try {
-        const { data } = await api.get("/posts/mine");
-        // Compared against the user's own postLimit now (was hardcoded to
-        // 1) — matches Post.controller.js createPost's real check, so a
-        // user who's been granted extra posts doesn't get stopped here
-        // pre-emptively.
-        setLimitReached((data.posts || []).length >= (user?.postLimit ?? 1));
+        // Fresh from the server, not the cached AuthContext user — that one
+        // only refreshes on page load, so it would be stale right after
+        // creating a post or getting an approval. Compared using postsUsed
+        // (the lifetime counter the backend actually enforces), NOT a live
+        // post count, so deleting a post can't make this screen think a
+        // slot has been freed up.
+        const { data } = await api.get("/auth/me");
+        const { postsUsed = 0, postLimit = 1 } = data.user || {};
+        setLimitReached(postsUsed >= postLimit);
       } catch (err) {
         // If this check itself fails, fall through to the form — the
         // backend still enforces the real limit on submit either way
@@ -117,7 +120,7 @@ export default function CreatePost() {
       }
     };
     checkEligibility();
-  }, [isEditMode, user?.role, user?.postLimit]);
+  }, [isEditMode, user?.role]);
 
   const handleMediaTypeChange = (type) => {
     // media type badalte hi purani uploaded file clear kar do — mismatch avoid karne ke liye

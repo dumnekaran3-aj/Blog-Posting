@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { categories, categorySlug } from "../../constants/categories";
+import { CATEGORY_STYLE, DEFAULT_CATEGORY_STYLE } from "../../constants/categoryIcons";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 
@@ -55,22 +56,37 @@ export default function PostSidebar({ activeCategory, excludePostId }) {
 
   return (
     <aside className="flex flex-col gap-4">
+      {/* Same icon-chip category card as Home / CategoryPosts, so a
+          category looks identical everywhere. The category of the post
+          being read is highlighted. */}
       <div className="bg-white border border-borderClr rounded-xl p-4">
-        <p className="text-sm font-medium text-textDark mb-3">Categories</p>
-        <div className="flex flex-col gap-1">
-          {categories.map((cat) => (
-            <Link
-              key={cat.value}
-              to={`/category/${categorySlug(cat.value)}`}
-              className={`text-sm px-3 py-2 rounded-md transition-colors ${
-                activeCategory === cat.value
-                  ? "bg-primary/10 text-primaryDark font-medium"
-                  : "text-slate-600 hover:bg-primary/5 hover:text-primary"
-              }`}
-            >
-              {cat.value}
-            </Link>
-          ))}
+        <p className="text-sm font-medium text-textDark mb-1">All categories</p>
+        <p className="text-[11px] text-textMuted mb-3">Browse posts by topic</p>
+        <div className="flex flex-col">
+          {categories.map((cat) => {
+            const { icon: Icon, tint } = CATEGORY_STYLE[cat.value] || DEFAULT_CATEGORY_STYLE;
+            const isActive = activeCategory === cat.value;
+            return (
+              <Link
+                key={cat.value}
+                to={`/category/${categorySlug(cat.value)}`}
+                className={`group flex items-center gap-3 px-2 py-2 rounded-lg transition-colors ${
+                  isActive ? "bg-primary/5" : "hover:bg-bgLight"
+                }`}
+              >
+                <span className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${tint}`}>
+                  <Icon size={15} strokeWidth={2} />
+                </span>
+                <span
+                  className={`text-[13px] font-medium transition-colors ${
+                    isActive ? "text-primary" : "text-slate-700 group-hover:text-primary"
+                  }`}
+                >
+                  {cat.value}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </div>
 

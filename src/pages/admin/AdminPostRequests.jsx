@@ -114,7 +114,7 @@ export default function AdminPostRequests() {
                   </td>
                   <td className="px-4 py-2.5 text-textMuted max-w-xs">{r.message}</td>
                   <td className="px-4 py-2.5 text-textMuted whitespace-nowrap">
-                    {r.currentPostCount}/{r.user?.postLimit ?? "?"} used
+                    {r.user?.postsUsed ?? "?"}/{r.user?.postLimit ?? "?"} used
                   </td>
                   <td className="px-4 py-2.5 text-textMuted whitespace-nowrap">
                     {new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
@@ -139,11 +139,11 @@ export default function AdminPostRequests() {
                           <input
                             type="number"
                             min={1}
-                            max={50}
+                            max={5000}
                             placeholder="Custom"
                             value={customCounts[r._id] || ""}
                             onChange={(e) => setCustomCounts((prev) => ({ ...prev, [r._id]: e.target.value }))}
-                            className="w-16 border border-borderClr rounded px-2 py-1 text-xs outline-none focus:border-primary"
+                            className="w-20 border border-borderClr rounded px-2 py-1 text-xs outline-none focus:border-primary"
                           />
                           <button
                             disabled={actingId === r._id || !customCounts[r._id]}

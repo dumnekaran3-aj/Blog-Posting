@@ -30,6 +30,7 @@ export default function AdminLayout() {
   const { admin, logout } = useAdminAuth();
   const navigate = useNavigate();
 
+  
   const handleLogout = async () => {
     await logout();
     navigate(`/${ADMIN_PATH}/login`);
