@@ -21,6 +21,7 @@ import ResourceList from "./pages/ResourceList";
 import PublicProfile from "./pages/PublicProfile";
 import Settings from  "./pages/Settings";
 import ScrollToTop from "./components/common/ScrollToTop";
+import NotFound from "./pages/NotFound";
 
 import AboutUs from "./pages/legal/AboutUs";
 import ContactUs from "./pages/legal/ContactUs";
@@ -166,7 +167,7 @@ function App() {
                 dikhane ke bajaye home pe chala jata hai. Pehle koi fallback
                 route hi nahi tha, isliye React Router kuch bhi match na hone
                 par literally kuch render nahi karta tha — plain white screen. */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFound />} />
 
           </Routes>
         </BrowserRouter>

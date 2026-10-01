@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /notifications
+Disallow: /create
+Disallow: /edit/
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-otp
+
+Sitemap: https://www.varitywire.com/sitemap.xml

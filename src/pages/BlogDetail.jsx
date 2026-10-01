@@ -15,6 +15,7 @@ import api from "../services/api";
 import renderPostContent from "../utils/renderPostContent";
 import renderHtmlPostContent, { htmlToPreviewText, looksLikeHtml } from "../utils/renderHtmlPostContent";
 import SEOHead from "../components/common/SEOHead";
+import NoIndex from "../components/common/NoIndex";
 
 // Reused by both the Article and BreadcrumbList JSON-LD below — one place
 // instead of the domain being hardcoded in two spots.
@@ -42,17 +43,24 @@ export default function BlogDetail() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [authorLightboxOpen, setAuthorLightboxOpen] = useState(false);
 
   useEffect(() => {
     const fetchPost = async () => {
       setLoading(true);
       setNotFound(false);
+      setLoadError(false);
       try {
         const { data } = await api.get(`/posts/${slug}`);
         setPost(data.post);
       } catch (err) {
-        setNotFound(true);
+        // Only a real 404 means "this post doesn't exist". Any other
+        // failure (server asleep, timeout, 5xx, rate limit) is temporary
+        // — it must NOT get noindex, or Googlebot could de-index a
+        // perfectly good post because the API was briefly down.
+        if (err.response?.status === 404) setNotFound(true);
+        else setLoadError(true);
       } finally {
         setLoading(false);
       }
@@ -179,7 +187,19 @@ export default function BlogDetail() {
 
         {!loading && notFound && (
           <div className="text-center py-16">
+            <NoIndex />
             <p className="text-sm text-textMuted mb-2">This post could not be found.</p>
+            <Link to="/" className="text-sm text-primary">
+              Back to home
+            </Link>
+          </div>
+        )}
+
+        {!loading && loadError && (
+          <div className="text-center py-16">
+            <p className="text-sm text-textMuted mb-2">
+              This post couldn't be loaded right now. Please refresh in a moment.
+            </p>
             <Link to="/" className="text-sm text-primary">
               Back to home
             </Link>
