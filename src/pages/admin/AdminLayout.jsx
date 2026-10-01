@@ -9,6 +9,7 @@ import {
   UserCog,
   LogOut,
   Inbox,
+  Compass,
 } from "lucide-react";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import { ADMIN_PATH } from "../../constants/adminPath";
@@ -22,6 +23,7 @@ const navItems = [
   { to: `/${ADMIN_PATH}/post-requests`, label: "Post requests", icon: Inbox, roles: ["admin"] },
   { to: `/${ADMIN_PATH}/comments`, label: "Comments", icon: MessageSquare, roles: ["admin", "moderator"] },
   { to: `/${ADMIN_PATH}/categories`, label: "Categories", icon: Tags, roles: ["admin", "moderator", "analyst"] },
+  { to: `/${ADMIN_PATH}/sitemap`, label: "Sitemap", icon: Compass, roles: ["admin", "moderator"] },
   { to: `/${ADMIN_PATH}/logs`, label: "Audit logs", icon: ScrollText, roles: ["admin"] },
   { to: `/${ADMIN_PATH}/accounts`, label: "Admin accounts", icon: UserCog, roles: ["admin"] },
 ];

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { MessageCircle, Eye, PlayCircle, Headphones } from "lucide-react";
 import LikeButton from "./LikeButton";
 import ShareButton from "./ShareButton";
@@ -15,6 +15,12 @@ const categoryStyles = {
 // the "Show more" button even appears depends on raw length — short posts
 // that happen to wrap to 3 short lines shouldn't get a pointless toggle.
 const PREVIEW_CHAR_THRESHOLD = 220;
+
+// How long a press has to be held before it counts as "hold" (opens the
+// image lightbox) instead of a quick tap (opens the post) — long enough
+// that a normal tap never accidentally triggers it, short enough that it
+// doesn't feel laggy.
+const LONG_PRESS_MS = 450;
 
 // mediaType: "image" | "video" | "audio" | "text"
 export default function PostCard({ post }) {
@@ -37,10 +43,17 @@ export default function PostCard({ post }) {
     isLiked,
   } = post;
 
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [authorLightboxOpen, setAuthorLightboxOpen] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
+
+  // Long-press bookkeeping for the image — a ref (not state) since it's
+  // read/written inside event handlers, not rendered, and doesn't need to
+  // trigger a re-render.
+  const pressTimer = useRef(null);
+  const wasLongPress = useRef(false);
 
   const badgeClass = categoryStyles[category] || categoryStyles.default;
 
@@ -65,6 +78,49 @@ export default function PostCard({ post }) {
 
   const trimmedContent = isHtmlContent ? htmlToPreviewText(content) : (content || "").trim();
   const isLong = trimmedContent.length > PREVIEW_CHAR_THRESHOLD;
+
+  const goToPost = () => navigate(`/blog/${slug}`);
+
+  // Card-wide click: anything inside that should NOT navigate (like
+  // button, comments link, share button, show more/less, video/audio
+  // controls) calls e.stopPropagation() in its own handler so this never
+  // fires for those. Everything else — the whitespace, the category
+  // badge, the title, a plain tap on the image — opens the post.
+  const handleCardClick = () => goToPost();
+
+  const handleCardKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      goToPost();
+    }
+  };
+
+  // Image: tap = open the post (same as clicking anywhere else on the
+  // card — no special-casing needed, just let the click bubble up).
+  // Hold = zoom. The timer starts the "hold" as soon as the press begins;
+  // if it fires before the finger/mouse lifts, this was a hold, not a
+  // tap — the click that follows the release is what a hold-then-navigate
+  // would otherwise still trigger, so that's what the click handler below
+  // blocks.
+  const handleImagePressStart = () => {
+    wasLongPress.current = false;
+    pressTimer.current = setTimeout(() => {
+      wasLongPress.current = true;
+      setLightboxOpen(true);
+    }, LONG_PRESS_MS);
+  };
+  const handleImagePressEnd = () => {
+    clearTimeout(pressTimer.current);
+  };
+  const handleImageClick = (e) => {
+    if (wasLongPress.current) {
+      // This click is the tail end of a hold that already opened the
+      // lightbox — swallow it so it doesn't ALSO navigate to the post.
+      e.stopPropagation();
+      wasLongPress.current = false;
+    }
+    // Otherwise: a genuine tap — let it bubble up to the card and navigate.
+  };
 
   return (
     <div>
@@ -103,44 +159,76 @@ export default function PostCard({ post }) {
         </p>
       </div>
 
-      {/* ---- The card itself ---- */}
-      <div className="bg-white border border-borderClr rounded-xl overflow-hidden hover:border-primary/40 transition-colors">
+      {/* ---- The card itself — the whole thing is clickable now ----
+            role="link" + tabIndex + onKeyDown make this keyboard/
+            screen-reader accessible even though it's a div, not an <a> —
+            an actual nested <a> isn't valid here since the card contains
+            other links/buttons (like/comment/share) that need their own
+            separate destinations. ---- */}
+      <div
+        role="link"
+        tabIndex={0}
+        onClick={handleCardClick}
+        onKeyDown={handleCardKeyDown}
+        className="bg-white border border-borderClr rounded-xl overflow-hidden hover:border-primary/40 transition-colors cursor-pointer group"
+      >
         <div className="flex justify-end px-3 pt-3">
           <span className={`text-[10px] px-2 py-0.5 rounded shrink-0 ${badgeClass}`}>
             {category || "General"}
           </span>
         </div>
 
-        {/* ---- Title — bold, larger, clickable → opens the full post ----
-              min-h ensures the title's own space never visually collapses/
-              gets lost against whatever comes right after it (media, or the
-              action row on text-only posts). ---- */}
-        <Link to={`/blog/${slug}`}>
-          <h3 className="text-lg font-bold text-textDark px-3 pt-1 pb-2 leading-snug line-clamp-2 min-h-[3.25rem] hover:text-primary">
-            {title}
-          </h3>
-        </Link>
+        {/* ---- Title — no longer its own Link; the whole card handles
+              navigation now, this is just styled text. ---- */}
+        <h3 className="text-lg font-bold text-textDark px-3 pt-1 pb-2 leading-snug line-clamp-2 min-h-[3.25rem] group-hover:text-primary">
+          {title}
+        </h3>
 
-        {/* ---- Media — interacts with itself (zoom / play), does NOT navigate away.
-              Only the title/text takes you to the full post. ---- */}
+        {/* ---- Media ----
+              Image: tap opens the post (bubbles to the card), hold opens
+              the lightbox (see handlers above).
+              Video/audio: unchanged — interacting with them plays/opens
+              controls rather than navigating, so their own onClick stops
+              the click from also bubbling up to the card. ---- */}
         {isImage && (
           <>
-            <button
-              type="button"
-              onClick={() => setLightboxOpen(true)}
-              className="block w-full relative h-56 overflow-hidden"
-              aria-label="View full image"
+            <div
+              onClick={handleImageClick}
+              onMouseDown={handleImagePressStart}
+              onMouseUp={handleImagePressEnd}
+              onMouseLeave={handleImagePressEnd}
+              onTouchStart={handleImagePressStart}
+              onTouchEnd={handleImagePressEnd}
+              className="block w-full relative h-56 overflow-hidden select-none"
             >
-              <img src={mediaUrl} alt={title} className="w-full h-full object-cover" />
-            </button>
+              <img
+                src={mediaUrl}
+                alt={title}
+                draggable={false}
+                className="w-full h-full object-cover pointer-events-none"
+              />
+            </div>
             {lightboxOpen && (
-              <Lightbox src={mediaUrl} alt={title} onClose={() => setLightboxOpen(false)} />
+              <Lightbox
+                src={mediaUrl}
+                alt={title}
+                onClose={(e) => {
+                  // Lightbox's own close (backdrop click / X button) is
+                  // inside the card too — stop it from also triggering the
+                  // card's navigate-on-click.
+                  e?.stopPropagation?.();
+                  setLightboxOpen(false);
+                }}
+              />
             )}
           </>
         )}
 
         {isVideo && (
-          <div className="relative h-56 overflow-hidden bg-black">
+          <div
+            className="relative h-56 overflow-hidden bg-black"
+            onClick={(e) => e.stopPropagation()}
+          >
             {videoPlaying ? (
               <video
                 src={mediaUrl}
@@ -180,7 +268,7 @@ export default function PostCard({ post }) {
         )}
 
         {isAudio && (
-          <div className="px-3 pt-2 pb-1">
+          <div className="px-3 pt-2 pb-1" onClick={(e) => e.stopPropagation()}>
             <div className="rounded-lg bg-gradient-to-br from-secondary/10 via-primary/5 to-accent/10 p-3 flex items-center gap-3">
               <span className="bg-white rounded-full p-2 shrink-0">
                 <Headphones size={18} className="text-secondary" />
@@ -191,7 +279,10 @@ export default function PostCard({ post }) {
         )}
 
         {/* ---- Action row — right below media ---- */}
-        <div className="flex items-center gap-3 px-3 py-2.5 mt-1 border-t border-b border-borderClr">
+        <div
+          className="flex items-center gap-3 px-3 py-2.5 mt-1 border-t border-b border-borderClr"
+          onClick={(e) => e.stopPropagation()}
+        >
           <LikeButton postId={_id} initialLikesCount={likesCount} initialLiked={isLiked} size="sm" />
           <Link
             to={`/blog/${slug}#comments`}
@@ -222,7 +313,10 @@ export default function PostCard({ post }) {
             </p>
             {isLong && (
               <button
-                onClick={() => setExpanded((v) => !v)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpanded((v) => !v);
+                }}
                 className="text-xs font-medium text-primary hover:text-primary/80 mt-1"
               >
                 {expanded ? "Show less" : "Show more"}

@@ -38,6 +38,7 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPosts from "./pages/admin/AdminPosts";
+import AdminSitemap from "./pages/admin/AdminSitemap";
 // Lazy-loaded — this page pulls in TipTap/ProseMirror (the rich-text
 // editor), which is sizeable. Splitting it into its own chunk keeps that
 // weight out of the bundle every regular visitor downloads; it's only
@@ -155,6 +156,7 @@ function App() {
               <Route path="logs" element={<AdminAuditLogs />} />
               <Route path="accounts" element={<AdminAccounts />} />
                 <Route path="post-requests" element={<AdminPostRequests />} />
+                <Route path="sitemap" element={<AdminSitemap />} />
             </Route>
 
           

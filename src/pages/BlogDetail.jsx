@@ -16,6 +16,10 @@ import renderPostContent from "../utils/renderPostContent";
 import renderHtmlPostContent, { htmlToPreviewText, looksLikeHtml } from "../utils/renderHtmlPostContent";
 import SEOHead from "../components/common/SEOHead";
 
+// Reused by both the Article and BreadcrumbList JSON-LD below — one place
+// instead of the domain being hardcoded in two spots.
+const SITE_URL = "https://varitywire.com";
+
 // Meta-description fallback when the admin hasn't set one manually — strips
 // the plain-format markdown-ish tokens (bold/italic/color/table/chart)
 // down to readable text. Doesn't need to be pixel-perfect, just readable.
@@ -169,7 +173,7 @@ export default function BlogDetail() {
     <div className="min-h-screen flex flex-col bg-bgLight">
       <Navbar />
 
-      <div className="flex-1 max-w-6xl mx-auto w-full px-6 py-10 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-8">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-10 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-8">
         <div className="min-w-0">
         {loading && <p className="text-sm text-textMuted">Loading post...</p>}
 
@@ -184,20 +188,37 @@ export default function BlogDetail() {
 
         {!loading && post && (
           <>
-            <SEOHead
-              title={post.metaTitle || `${post.title} | VarityWire`}
-              description={
-                post.metaDescription ||
-                (post.contentFormat === "html" || looksLikeHtml(post.content)
-                  ? htmlToPreviewText(post.content)
-                  : stripPlainTokens(post.content)
-                ).slice(0, 160)
+            {/* Mirrors the VISIBLE breadcrumb <nav> below EXACTLY (same
+                labels, same conditional category step) — Google requires
+                the structured data to match what's actually on the page,
+                a mismatch here can get the rich result rejected in Search
+                Console. Position numbers are computed rather than
+                hardcoded so they shift correctly when a post has no
+                category (Title becomes position 3, not 4). */}
+            {(() => {
+              const trail = [
+                { name: "Home", url: `${SITE_URL}/` },
+                { name: post.postType === "news" ? "News" : "Blog", url: `${SITE_URL}/${post.postType === "news" ? "news" : "blogs"}` },
+              ];
+              if (post.category) {
+                trail.push({ name: post.category, url: `${SITE_URL}/category/${categorySlug(post.category)}` });
               }
-              keywords={post.metaKeywords}
-              image={post.thumbnail}
-              url={`/blog/${post.slug}`}
-              type="article"
-              jsonLd={{
+              // Last item is the current page — Google's spec says its
+              // "item" URL can be omitted since it's implied to be this page.
+              trail.push({ name: post.title });
+
+              const breadcrumbJsonLd = {
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                itemListElement: trail.map((step, i) => ({
+                  "@type": "ListItem",
+                  position: i + 1,
+                  name: step.name,
+                  ...(step.url ? { item: step.url } : {}),
+                })),
+              };
+
+              const articleJsonLd = {
                 "@context": "https://schema.org",
                 "@type": "Article",
                 headline: post.metaTitle || post.title,
@@ -208,9 +229,27 @@ export default function BlogDetail() {
                   : undefined,
                 datePublished: post.createdAt,
                 dateModified: post.updatedAt || post.createdAt,
-                mainEntityOfPage: `https://varitywire.com/blog/${post.slug}`,
-              }}
-            />
+                mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
+              };
+
+              return (
+                <SEOHead
+                  title={post.metaTitle || `${post.title} | VarityWire`}
+                  description={
+                    post.metaDescription ||
+                    (post.contentFormat === "html" || looksLikeHtml(post.content)
+                      ? htmlToPreviewText(post.content)
+                      : stripPlainTokens(post.content)
+                    ).slice(0, 160)
+                  }
+                  keywords={post.metaKeywords}
+                  image={post.thumbnail}
+                  url={`/blog/${post.slug}`}
+                  type="article"
+                  jsonLd={[articleJsonLd, breadcrumbJsonLd]}
+                />
+              );
+            })()}
 
             {/* Breadcrumb — Home / Blog|News / Category / Title. Title is
                 the current page so it's plain text, everything before it
