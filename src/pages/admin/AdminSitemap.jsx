@@ -61,8 +61,8 @@ export default function AdminSitemap() {
   };
 
   return (
-    <div className="p-8 max-w-2xl">
-      <div className="flex items-center justify-between mb-1">
+    <div className="p-6 lg:p-8 w-full min-h-screen flex flex-col">
+      <div className="flex items-center justify-between mb-1 w-full">
         <h1 className="text-xl font-medium text-textDark">Sitemap</h1>
         <button
           onClick={() => fetchStatus(true)}
@@ -72,7 +72,7 @@ export default function AdminSitemap() {
           <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} /> Refresh
         </button>
       </div>
-      <p className="text-xs text-textMuted mb-5">
+      <p className="text-xs text-textMuted mb-5 max-w-3xl">
         sitemap.xml is generated fresh from the database on every request — there's nothing to "regenerate",
         it's always current. This page just shows what's currently in it.
       </p>
@@ -84,9 +84,9 @@ export default function AdminSitemap() {
       )}
 
       {!loading && data && (
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 flex-1 auto-rows-fr content-start">
           {/* URL breakdown */}
-          <div className="bg-white border border-borderClr rounded-xl p-4">
+          <div className="bg-white border border-borderClr rounded-xl p-5 h-full">
             <p className="text-sm font-medium text-textDark mb-2">What's in the sitemap</p>
             <StatRow label="Published posts" value={data.breakdown.posts} />
             <StatRow label="Categories" value={data.breakdown.categories} />
@@ -113,7 +113,7 @@ export default function AdminSitemap() {
           </div>
 
           {/* Verification meta tags */}
-          <div className="bg-white border border-borderClr rounded-xl p-4">
+          <div className="bg-white border border-borderClr rounded-xl p-5 h-full">
             <p className="text-sm font-medium text-textDark mb-3">Verification tags in site HTML</p>
             <div className="flex gap-2 flex-wrap">
               <StatusPill tone={data.verificationTags.google ? "good" : "bad"}>
@@ -126,7 +126,7 @@ export default function AdminSitemap() {
           </div>
 
           {/* Live Google Search Console status */}
-          <div className="bg-white border border-borderClr rounded-xl p-4">
+          <div className="bg-white border border-borderClr rounded-xl p-5 h-full">
             <p className="text-sm font-medium text-textDark mb-3">Google Search Console (live)</p>
 
             {!data.googleSearchConsole.configured && (
@@ -164,7 +164,7 @@ export default function AdminSitemap() {
             )}
           </div>
 
-          <p className="text-[11px] text-textMuted">
+          <p className="text-[11px] text-textMuted lg:col-span-2 2xl:col-span-3 self-end">
             Checked {new Date(data.checkedAt).toLocaleString("en-IN", {
               day: "numeric",
               month: "short",

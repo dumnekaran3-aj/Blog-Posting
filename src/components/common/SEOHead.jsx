@@ -7,13 +7,14 @@ function setMeta(attr, key, value) {
   if (!value) return null;
   let el = document.querySelector(`meta[${attr}="${key}"]`);
   const existed = !!el;
+  const prevContent = existed ? el.getAttribute("content") : null;
   if (!el) {
     el = document.createElement("meta");
     el.setAttribute(attr, key);
     document.head.appendChild(el);
   }
   el.setAttribute("content", value);
-  return { el, existed };
+  return { el, existed, prevContent };
 }
 
 // Sets page-specific SEO tags while mounted. Google's crawler runs JS, so
@@ -28,6 +29,11 @@ function setMeta(attr, key, value) {
 // Google's AI Overviews and similar systems actually parse to understand
 // page content, more reliably than plain meta tags.
 export default function SEOHead({ title, description, keywords, image, url, type = "website", jsonLd }) {
+  // Callers pass a fresh array/object literal on every render, which would
+  // re-run this effect (remove + re-inject all tags) each time. Comparing
+  // by serialized content keeps it stable.
+  const jsonLdKey = jsonLd ? JSON.stringify(jsonLd) : "";
+
   useEffect(() => {
     const prevTitle = document.title;
     if (title) document.title = title;
@@ -64,12 +70,18 @@ export default function SEOHead({ title, description, keywords, image, url, type
     }
     canonical.setAttribute("href", fullUrl);
 
-    let jsonLdScript = null;
-    if (jsonLd) {
-      jsonLdScript = document.createElement("script");
-      jsonLdScript.type = "application/ld+json";
-      jsonLdScript.textContent = JSON.stringify(jsonLd);
-      document.head.appendChild(jsonLdScript);
+    // One <script> per schema object (Article, BreadcrumbList, ...) instead
+    // of one script holding an array — the most widely-parsed shape.
+    const jsonLdScripts = [];
+    if (jsonLdKey) {
+      const items = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
+      items.filter(Boolean).forEach((item) => {
+        const script = document.createElement("script");
+        script.type = "application/ld+json";
+        script.textContent = JSON.stringify(item);
+        document.head.appendChild(script);
+        jsonLdScripts.push(script);
+      });
     }
 
     return () => {
@@ -78,13 +90,15 @@ export default function SEOHead({ title, description, keywords, image, url, type
       // existed in index.html as static defaults) — leaves the static
       // baseline intact for whatever page mounts next, before its own
       // SEOHead (if any) sets its own values.
-      tracked.forEach(({ el, existed }) => {
+      tracked.forEach(({ el, existed, prevContent }) => {
         if (!existed) el.remove();
+        else if (prevContent !== null) el.setAttribute("content", prevContent);
       });
       if (!canonicalExisted) canonical.remove();
-      if (jsonLdScript) jsonLdScript.remove();
+      jsonLdScripts.forEach((script) => script.remove());
     };
-  }, [title, description, keywords, image, url, type, jsonLd]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, description, keywords, image, url, type, jsonLdKey]);
 
   return null;
 }
