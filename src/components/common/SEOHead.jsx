@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-const SITE_URL = "https://varitywire.com";
+const SITE_URL = "https://www.varitywire.com";
 const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`;
 
 function setMeta(attr, key, value) {

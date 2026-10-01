@@ -18,7 +18,7 @@ import SEOHead from "../components/common/SEOHead";
 
 // Reused by both the Article and BreadcrumbList JSON-LD below — one place
 // instead of the domain being hardcoded in two spots.
-const SITE_URL = "https://varitywire.com";
+const SITE_URL = "https://www.varitywire.com";
 
 // Meta-description fallback when the admin hasn't set one manually — strips
 // the plain-format markdown-ish tokens (bold/italic/color/table/chart)
