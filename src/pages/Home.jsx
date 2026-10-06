@@ -9,6 +9,7 @@ import { useAuth } from "../context/AuthContext";
 import { categories as allCategories, categorySlug } from "../constants/categories";
 import { CATEGORY_STYLE, DEFAULT_CATEGORY_STYLE } from "../constants/categoryIcons";
 import api from "../services/api";
+import { postPath } from "../utils/postUrl";
 
 export default function Home() {
   const { user } = useAuth();
@@ -240,7 +241,7 @@ export default function Home() {
                 {suggestedPosts.map((post) => (
                   <Link
                     key={post._id}
-                    to={`/blog/${post.slug}`}
+                    to={postPath(post)}
                     className="group block rounded-lg overflow-hidden border border-transparent hover:border-borderClr transition-colors"
                   >
                     {post.thumbnail || post.mediaUrl ? (

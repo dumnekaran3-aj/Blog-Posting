@@ -5,6 +5,7 @@ import { categories, categorySlug } from "../../constants/categories";
 import { CATEGORY_STYLE, DEFAULT_CATEGORY_STYLE } from "../../constants/categoryIcons";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
+import { postPath } from "../../utils/postUrl";
 
 // PostSidebar
 // -------------
@@ -99,7 +100,7 @@ export default function PostSidebar({ activeCategory, excludePostId }) {
             {suggestedPosts.map((post) => (
               <Link
                 key={post._id}
-                to={`/blog/${post.slug}`}
+                to={postPath(post)}
                 className="group block rounded-lg overflow-hidden border border-transparent hover:border-borderClr transition-colors"
               >
                 {post.thumbnail || post.mediaUrl ? (

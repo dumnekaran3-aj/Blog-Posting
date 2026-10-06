@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useLocation, Link, Navigate } from "react-router-dom";
 import { Eye, Home as HomeIcon, ChevronRight } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
@@ -16,6 +16,7 @@ import renderPostContent from "../utils/renderPostContent";
 import renderHtmlPostContent, { htmlToPreviewText, looksLikeHtml } from "../utils/renderHtmlPostContent";
 import SEOHead from "../components/common/SEOHead";
 import NoIndex from "../components/common/NoIndex";
+import { postPath } from "../utils/postUrl";
 
 // Reused by both the Article and BreadcrumbList JSON-LD below — one place
 // instead of the domain being hardcoded in two spots.
@@ -39,6 +40,7 @@ function stripPlainTokens(text) {
 
 export default function BlogDetail() {
   const { slug } = useParams();
+  const location = useLocation();
   const { user, socket } = useAuth();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -177,6 +179,17 @@ export default function BlogDetail() {
     return null;
   };
 
+  // News posts must live at /news/<slug>, everything else at /blog/<slug>.
+  // Wrong prefix (old indexed link, shared link, notification) -> redirect.
+  // `post.slug === slug` avoids acting on the previous post while a new one loads.
+  if (!loading && post && post.slug === slug) {
+    const onNewsRoute = location.pathname.startsWith("/news/");
+    const shouldBeNews = post.postType === "news";
+    if (onNewsRoute !== shouldBeNews) {
+      return <Navigate to={`${postPath(post)}${location.search}${location.hash}`} replace />;
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-bgLight">
       <Navbar />
@@ -249,7 +262,7 @@ export default function BlogDetail() {
                   : undefined,
                 datePublished: post.createdAt,
                 dateModified: post.updatedAt || post.createdAt,
-                mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
+                mainEntityOfPage: `${SITE_URL}${postPath(post)}`,
               };
 
               return (
@@ -264,7 +277,7 @@ export default function BlogDetail() {
                   }
                   keywords={post.metaKeywords}
                   image={post.thumbnail}
-                  url={`/blog/${post.slug}`}
+                  url={postPath(post)}
                   type="article"
                   jsonLd={[articleJsonLd, breadcrumbJsonLd]}
                 />
@@ -365,7 +378,7 @@ export default function BlogDetail() {
                 initialLiked={post.isLiked || false}
                 size="lg"
               />
-              <ShareButton url={`/blog/${post.slug}`} title={post.title} size="lg" />
+              <ShareButton url={postPath(post)} title={post.title} size="lg" />
               <span className="flex items-center gap-1 text-sm text-textMuted ml-auto">
                 <Eye size={16} /> {post.viewsCount} views
               </span>

@@ -5,7 +5,8 @@ import LikeButton from "./LikeButton";
 import ShareButton from "./ShareButton";
 import Lightbox from "../common/Lightbox";
 import renderPostContent, { renderPostPreview } from "../../utils/renderPostContent";
-import { htmlToPreviewText, looksLikeHtml } from "../../utils/renderHtmlPostContent";
+import renderHtmlPostContent, { htmlToPreviewText, looksLikeHtml } from "../../utils/renderHtmlPostContent";
+import { postPath } from "../../utils/postUrl";
 
 const categoryStyles = {
   default: "bg-textMuted/10 text-textMuted",
@@ -26,7 +27,6 @@ const LONG_PRESS_MS = 450;
 export default function PostCard({ post }) {
   const {
     _id,
-    slug,
     title,
     content,
     contentFormat,
@@ -79,7 +79,8 @@ export default function PostCard({ post }) {
   const trimmedContent = isHtmlContent ? htmlToPreviewText(content) : (content || "").trim();
   const isLong = trimmedContent.length > PREVIEW_CHAR_THRESHOLD;
 
-  const goToPost = () => navigate(`/blog/${slug}`);
+  const path = postPath(post);
+  const goToPost = () => navigate(path);
 
   // Card-wide click: anything inside that should NOT navigate (like
   // button, comments link, share button, show more/less, video/audio
@@ -285,7 +286,7 @@ export default function PostCard({ post }) {
         >
           <LikeButton postId={_id} initialLikesCount={likesCount} initialLiked={isLiked} size="sm" />
           <Link
-            to={`/blog/${slug}#comments`}
+            to={`${path}#comments`}
             className="flex items-center gap-1 text-[11px] text-secondary hover:text-secondary/80"
             aria-label="View comments"
           >
@@ -295,7 +296,7 @@ export default function PostCard({ post }) {
             <Eye size={13} /> {viewsCount ?? 0}
           </span>
           <div className="ml-auto">
-            <ShareButton url={`/blog/${slug}`} title={title} />
+            <ShareButton url={path} title={title} />
           </div>
         </div>
 
@@ -304,13 +305,23 @@ export default function PostCard({ post }) {
               auto-linked ---- */}
         {trimmedContent && (
           <div className="px-3 py-2.5">
-            <p
-              className={`text-sm text-textDark whitespace-pre-line ${textStyleClass} ${
-                expanded ? "" : "line-clamp-3"
-              }`}
-            >
-              {isHtmlContent ? trimmedContent : renderPostPreview(trimmedContent)}
-            </p>
+            {expanded ? (
+              // Expanded = the SAME rendering as the BlogDetail page
+              // (headings, paragraphs, lists, tables, charts, links), not
+              // the flattened preview text. Clicks inside don't bubble to
+              // the card, so selecting text / opening a link doesn't also
+              // navigate to the post.
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className={`text-sm text-textDark leading-relaxed whitespace-pre-wrap ${textStyleClass} [&_h1]:text-xl [&_h1]:font-semibold [&_h1]:mt-3 [&_h1]:mb-1 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-1 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_table]:border-collapse [&_table]:w-full [&_td]:border [&_td]:border-borderClr [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-borderClr [&_th]:px-2 [&_th]:py-1 [&_th]:bg-bgLight [&_a]:text-primary [&_a]:underline [&_img]:max-w-full [&_img]:rounded-md [&_blockquote]:border-l-2 [&_blockquote]:border-borderClr [&_blockquote]:pl-3 [&_blockquote]:italic`}
+              >
+                {isHtmlContent ? renderHtmlPostContent(content) : renderPostContent(content)}
+              </div>
+            ) : (
+              <p className={`text-sm text-textDark whitespace-pre-line ${textStyleClass} line-clamp-3`}>
+                {isHtmlContent ? trimmedContent : renderPostPreview(trimmedContent)}
+              </p>
+            )}
             {isLong && (
               <button
                 onClick={(e) => {

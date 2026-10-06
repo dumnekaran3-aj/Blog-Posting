@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { postPath } from "../utils/postUrl";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
@@ -159,7 +160,7 @@ export default function CreatePost() {
       const { data } = isEditMode
         ? await api.put(`/posts/${id}`, payload)
         : await api.post("/posts", payload);
-      navigate(`/blog/${data.post.slug}`);
+      navigate(postPath(data.post));
     } catch (err) {
       if (!isEditMode && err.response?.data?.code === "FREE_LIMIT_REACHED") {
         // Backend is the real source of truth — if the frontend's own

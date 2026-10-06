@@ -113,6 +113,7 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/verify-otp" element={<VerifyOtp />} />
             <Route path="/blog/:slug" element={<BlogDetail />} />
+            <Route path="/news/:slug" element={<BlogDetail />} />
 
             <Route
               path="/create"

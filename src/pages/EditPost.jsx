@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { postPath } from "../utils/postUrl";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
@@ -28,7 +29,7 @@ export default function EditPost() {
 
   const handleSubmit = async (form, status) => {
     const { data } = await api.put(`/posts/${id}`, { ...form, status });
-    navigate(`/blog/${data.post.slug}`);
+    navigate(postPath(data.post));
   };
 
   return (

@@ -4,6 +4,7 @@ import { Search, TrendingUp } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import PostCard from "../components/blog/PostCart";
+import { postPath } from "../utils/postUrl";
 import Pagination from "../components/common/Pagination";
 import { categories, categorySlug } from "../constants/categories";
 import { CATEGORY_STYLE, DEFAULT_CATEGORY_STYLE } from "../constants/categoryIcons";
@@ -186,7 +187,7 @@ export default function CategoryPosts() {
                 {trending.map((post) => (
                   <Link
                     key={post._id}
-                    to={`/blog/${post.slug}`}
+                    to={postPath(post)}
                     className="group block rounded-lg overflow-hidden border border-transparent hover:border-borderClr transition-colors"
                   >
                     {post.thumbnail || post.mediaUrl ? (
