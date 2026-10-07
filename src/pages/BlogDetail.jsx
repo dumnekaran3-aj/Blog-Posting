@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation, Link, Navigate } from "react-router-dom";
-import { Eye, Home as HomeIcon, ChevronRight } from "lucide-react";
+import { Eye, Home as HomeIcon, ChevronRight, Clock } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import LikeButton from "../components/blog/LikeButton";
@@ -194,6 +194,128 @@ export default function BlogDetail() {
     <div className="min-h-screen flex flex-col bg-bgLight">
       <Navbar />
 
+      {/* ---- Article header band — dark, full width, above the content
+            grid. Breadcrumb labels/steps are identical to the
+            BreadcrumbList JSON-LD in SEOHead (Home / Blog|News /
+            Category / Title) — Google needs them to match. ---- */}
+      {!loading && post && (
+        <header
+          className="border-b border-white/10 text-white"
+          style={{
+            backgroundColor: "#1B0E3A",
+            backgroundImage:
+              "radial-gradient(ellipse at 88% 40%, rgba(245,158,11,0.13), transparent 55%), linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px)",
+            backgroundSize: "auto, 28px 28px, 28px 28px",
+          }}
+        >
+          <div className="max-w-7xl mx-auto px-6 py-8 md:py-10">
+            <nav className="flex items-center gap-2 text-[13px] flex-wrap mb-5">
+              <Link
+                to="/"
+                aria-label="Home"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-200 flex items-center justify-center transition-colors"
+              >
+                <HomeIcon size={15} />
+              </Link>
+              <span className="text-slate-500">/</span>
+              <Link
+                to={post.postType === "news" ? "/news" : "/blogs"}
+                className="font-semibold text-slate-300 hover:text-white transition-colors"
+              >
+                {post.postType === "news" ? "News" : "Blog"}
+              </Link>
+              {post.category && (
+                <>
+                  <span className="text-slate-500">/</span>
+                  <Link
+                    to={`/category/${categorySlug(post.category)}`}
+                    className="font-semibold text-slate-300 hover:text-white transition-colors"
+                  >
+                    {post.category}
+                  </Link>
+                </>
+              )}
+              <span className="text-slate-500">/</span>
+              <span className="font-bold text-white truncate max-w-[200px] sm:max-w-[420px] lg:max-w-[600px]">
+                {post.title}
+              </span>
+            </nav>
+
+            {post.category && (
+              <Link
+                to={`/category/${categorySlug(post.category)}`}
+                className="inline-block mb-4 px-4 py-1.5 rounded-full border border-accent/40 bg-accent/10 text-accent text-[11px] font-bold uppercase tracking-[0.18em] hover:bg-accent/20 transition-colors"
+              >
+                {post.category}
+              </Link>
+            )}
+
+            <h1 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-extrabold leading-[1.15] tracking-tight text-white max-w-4xl mb-6">
+              {post.title}
+            </h1>
+
+            <div className="flex items-center gap-2.5 text-sm text-slate-300 flex-wrap">
+              {/* Avatar click => enlarge (Lightbox), naam click => profile */}
+              <button
+                type="button"
+                onClick={() => post.author?.avatar && setAuthorLightboxOpen(true)}
+                aria-label={`View ${post.author?.name || "user"}'s profile photo`}
+              >
+                {post.author?.avatar ? (
+                  <img
+                    src={post.author.avatar}
+                    alt={post.author.name}
+                    className="w-9 h-9 rounded-full object-cover border border-accent/40"
+                  />
+                ) : (
+                  <span className="w-9 h-9 rounded-full bg-white/10 border border-accent/40 text-accent flex items-center justify-center text-sm font-bold">
+                    {post.author?.name?.charAt(0).toUpperCase() || "U"}
+                  </span>
+                )}
+              </button>
+              {authorLightboxOpen && (
+                <Lightbox
+                  src={post.author?.avatar}
+                  alt={post.author?.name}
+                  onClose={() => setAuthorLightboxOpen(false)}
+                />
+              )}
+              <span>
+                By{" "}
+                <Link
+                  to={`/profile/${post.author?.username}`}
+                  className="font-bold text-white hover:text-accent transition-colors"
+                >
+                  {post.author?.name || "Unknown"}
+                </Link>
+              </span>
+              <span className="text-slate-500">&middot;</span>
+              <span>
+                {new Date(post.createdAt).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </span>
+              <span className="text-slate-500">&middot;</span>
+              <span className="inline-flex items-center gap-1.5 font-semibold text-accent">
+                <Clock size={14} />
+                {(() => {
+                  // ~200 words/min, minimum 1 minute
+                  const text =
+                    post.contentFormat === "html" || looksLikeHtml(post.content)
+                      ? htmlToPreviewText(post.content)
+                      : stripPlainTokens(post.content);
+                  const words = text.split(/\s+/).filter(Boolean).length;
+                  return Math.max(1, Math.ceil(words / 200));
+                })()}{" "}
+                min read
+              </span>
+            </div>
+          </div>
+        </header>
+      )}
+
       <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-10 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-8">
         <div className="min-w-0">
         {loading && <p className="text-sm text-textMuted">Loading post...</p>}
@@ -283,80 +405,6 @@ export default function BlogDetail() {
                 />
               );
             })()}
-
-            {/* Breadcrumb — Home / Blog|News / Category / Title. Title is
-                the current page so it's plain text, everything before it
-                navigates. */}
-            <nav className="flex items-center gap-2 text-sm text-textMuted mb-4 flex-wrap">
-              <Link
-                to="/"
-                className="hover:text-primary transition-colors flex items-center px-1.5 py-1 rounded hover:bg-primary/5"
-                aria-label="Home"
-              >
-                <HomeIcon size={16} />
-              </Link>
-              <ChevronRight size={14} className="text-textMuted/50" />
-              <Link
-                to={post.postType === "news" ? "/news" : "/blogs"}
-                className="hover:text-primary transition-colors px-1.5 py-1 rounded hover:bg-primary/5"
-              >
-                {post.postType === "news" ? "News" : "Blog"}
-              </Link>
-              {post.category && (
-                <>
-                  <ChevronRight size={14} className="text-textMuted/50" />
-                  <Link
-                    to={`/category/${categorySlug(post.category)}`}
-                    className="hover:text-primary transition-colors px-1.5 py-1 rounded hover:bg-primary/5"
-                  >
-                    {post.category}
-                  </Link>
-                </>
-              )}
-              <ChevronRight size={14} className="text-textMuted/50" />
-              <span className="text-textDark font-medium truncate max-w-[280px]">{post.title}</span>
-            </nav>
-
-            <h1 className="text-2xl font-medium text-textDark mb-2">{post.title}</h1>
-
-            <div className="flex items-center gap-2 text-xs text-textMuted mb-5">
-              {/* Avatar click => enlarge (Lightbox), naam click => profile */}
-              <button
-                type="button"
-                onClick={() => post.author?.avatar && setAuthorLightboxOpen(true)}
-                aria-label={`View ${post.author?.name || "user"}'s profile photo`}
-              >
-                {post.author?.avatar ? (
-                  <img
-                    src={post.author.avatar}
-                    alt={post.author.name}
-                    className="w-6 h-6 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-medium">
-                    {post.author?.name?.charAt(0).toUpperCase() || "U"}
-                  </span>
-                )}
-              </button>
-              {authorLightboxOpen && (
-                <Lightbox
-                  src={post.author?.avatar}
-                  alt={post.author?.name}
-                  onClose={() => setAuthorLightboxOpen(false)}
-                />
-              )}
-              <Link to={`/profile/${post.author?.username}`} className="hover:text-primary">
-                By {post.author?.name || "Unknown"}
-              </Link>
-              <span>&middot;</span>
-              <span>
-                {new Date(post.createdAt).toLocaleDateString("en-IN", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </span>
-            </div>
 
             {renderMedia()}
 

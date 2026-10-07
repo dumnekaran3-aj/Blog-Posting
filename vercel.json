@@ -1,6 +1,34 @@
 {
   "rewrites": [
-    { "source": "/sitemap.xml", "destination": "https://vritywire-backend.onrender.com/sitemap.xml" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/sitemap.xml",
+      "destination": "https://vritywire-backend.onrender.com/sitemap.xml"
+    },
+    {
+      "source": "/blog/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(googlebot|google-inspectiontool|adsbot-google|bingbot|duckduckbot|yandexbot|baiduspider|applebot|facebookexternalhit|facebot|twitterbot|linkedinbot|whatsapp|slackbot|telegrambot|discordbot|pinterest|redditbot|embedly|skypeuripreview).*"
+        }
+      ],
+      "destination": "/api/post-meta?type=blog&slug=:slug"
+    },
+    {
+      "source": "/news/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(googlebot|google-inspectiontool|adsbot-google|bingbot|duckduckbot|yandexbot|baiduspider|applebot|facebookexternalhit|facebot|twitterbot|linkedinbot|whatsapp|slackbot|telegrambot|discordbot|pinterest|redditbot|embedly|skypeuripreview).*"
+        }
+      ],
+      "destination": "/api/post-meta?type=news&slug=:slug"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }
