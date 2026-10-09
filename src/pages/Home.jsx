@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Search, Sparkles, TrendingUp } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import PostCard from "../components/blog/PostCart";
+import PageHero from "../components/common/PageHero";
+import TrendingShowcase from "../components/blog/TrendingShowcase";
 import Pagination from "../components/common/Pagination";
 import { useAuth } from "../context/AuthContext";
 import { categories as allCategories, categorySlug } from "../constants/categories";
@@ -137,16 +138,14 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-bgLight">
       <Navbar />
 
-      <section className="max-w-7xl mx-auto w-full px-6 pt-8 pb-4">
-        <h1 className="text-2xl font-medium text-textDark mb-1">
-          Ideas worth sharing
-        </h1>
-        <p className="text-sm text-textMuted">
-          Fresh posts from writers across marketing, tech, and design
-        </p>
-      </section>
+      <PageHero
+        badge="Discover · Explore · Understand"
+        title="Ideas worth sharing"
+        description="Fresh posts from writers across marketing, tech, and design"
+        search={{ value: searchInput, onChange: setSearchInput, placeholder: "Search posts by topic, author, or keyword..." }}
+      />
 
-      <section className="max-w-7xl mx-auto w-full px-6 pb-10 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-6 items-start">
+      <section className="max-w-7xl mx-auto w-full px-6 pt-8 pb-10 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-6 items-start">
         {/* Post feed — single column, full width. Ek post ke niche doosri
             post aati hai (pehle 2-column grid tha, ab har post apni poori
             available width leti hai — jo pehle 2 posts milke leti thi) */}
@@ -182,21 +181,21 @@ export default function Home() {
             sticky doesn't make sense once the sidebar is below the feed
             instead of beside it. */}
         <aside className="flex flex-col gap-4 md:sticky md:top-20 md:max-h-[calc(100vh-6rem)] md:overflow-y-auto md:pb-2">
-          <div className="bg-white border border-borderClr rounded-xl px-3 py-2 flex items-center gap-2">
-            <Search size={15} className="text-textMuted" />
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search posts"
-              className="text-xs outline-none w-full placeholder:text-slate-400"
+          {/* Auto-swiping media carousel + auto-scrolling suggestions list.
+              Personalized to the user's interests when they have any,
+              otherwise trending (same data the old grid used). */}
+          {suggestedPosts.length > 0 && (
+            <TrendingShowcase
+              posts={suggestedPosts}
+              title={isPersonalized ? "Suggested for you" : "Trending now"}
+              personalized={isPersonalized}
             />
-          </div>
+          )}
 
           {/* All categories — poore list ka apna page hai (/category/:slug);
               har category ka apna icon chip + tint hai taaki card ek flat
               text list na lage, balki ek curated directory jaisa lage */}
-          <div className="bg-white border border-borderClr rounded-xl p-4">
+          <div className="bg-white border border-borderClr rounded-xl p-4 shrink-0">
             <p className="text-sm font-medium text-textDark mb-1">All categories</p>
             <p className="text-[11px] text-textMuted mb-3">Browse posts by topic</p>
             <div className="flex flex-col">
@@ -220,54 +219,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Suggested / Trending — personalized when the user has interests
-              set, otherwise a trending fallback so this never sits empty.
-              2-column thumbnail grid (was a single tall column) so it fills
-              the sidebar's width properly instead of leaving it narrow. */}
-          {suggestedPosts.length > 0 && (
-            <div className="bg-white border border-borderClr rounded-xl p-4">
-              <p className="flex items-center gap-1.5 text-sm font-medium text-textDark mb-4">
-                {isPersonalized ? (
-                  <>
-                    <Sparkles size={15} className="text-primary" /> Suggested for you
-                  </>
-                ) : (
-                  <>
-                    <TrendingUp size={15} className="text-primary" /> Trending now
-                  </>
-                )}
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                {suggestedPosts.map((post) => (
-                  <Link
-                    key={post._id}
-                    to={postPath(post)}
-                    className="group block rounded-lg overflow-hidden border border-transparent hover:border-borderClr transition-colors"
-                  >
-                    {post.thumbnail || post.mediaUrl ? (
-                      <img
-                        src={post.thumbnail || post.mediaUrl}
-                        alt={post.title}
-                        className="w-full h-20 object-cover rounded-lg"
-                      />
-                    ) : (
-                      <div className="w-full h-20 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-lg font-medium">
-                        {post.category?.charAt(0).toUpperCase() || "P"}
-                      </div>
-                    )}
-                    <div className="pt-2 px-0.5 pb-1">
-                      <p className="text-[9px] uppercase tracking-wide text-primary font-medium mb-1">
-                        {post.category}
-                      </p>
-                      <p className="text-xs text-textDark font-medium line-clamp-2 leading-snug group-hover:text-primary transition-colors">
-                        {post.title}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
         </aside>
       </section>
 
