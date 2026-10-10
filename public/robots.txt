@@ -12,3 +12,4 @@ Disallow: /reset-password
 Disallow: /verify-otp
 
 Sitemap: https://www.varitywire.com/sitemap.xml
+Sitemap: https://www.varitywire.com/static/sitemap.xml

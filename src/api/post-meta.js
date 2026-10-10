@@ -112,24 +112,31 @@ export default async function handler(req, res) {
   }
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  // Visible in `curl -I`: tells you whether this function ran and what it did
+  // (injected | redirect | not-found | backend-unreachable).
+  const mark = (v) => res.setHeader('X-Post-Meta', v);
 
   if (post) {
     // Wrong prefix for this post's type -> real 301 to the right URL.
     if (post.postType !== type) {
+      mark('redirect');
       res.setHeader('Location', postPath(post));
       res.setHeader('Cache-Control', 'public, s-maxage=3600');
       return res.status(301).end();
     }
+    mark('injected');
     res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400');
     return res.status(200).send(injectMeta(html, post));
   }
 
   if (notFound) {
+    mark('not-found');
     res.setHeader('Cache-Control', 'public, s-maxage=60');
     return res.status(404).send(html); // SPA renders its own "not found" UI
   }
 
   // Backend unreachable: serve the generic shell, don't cache it for long.
+  mark('backend-unreachable');
   res.setHeader('Cache-Control', 'public, s-maxage=30');
   return res.status(200).send(html);
 }

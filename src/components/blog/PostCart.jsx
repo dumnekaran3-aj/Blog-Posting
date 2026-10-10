@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MessageCircle, Eye, PlayCircle, Headphones } from "lucide-react";
 import LikeButton from "./LikeButton";
@@ -87,14 +87,60 @@ export default function PostCard({ post }) {
   // controls) calls e.stopPropagation() in its own handler so this never
   // fires for those. Everything else — the whitespace, the category
   // badge, the title, a plain tap on the image — opens the post.
-  const handleCardClick = () => goToPost();
+  // Open the post in a new tab. "noopener,noreferrer" so the new tab can't
+  // reach back into this one (window.opener). `path` is always built by
+  // postPath() — a fixed "/blog/..." or "/news/..." prefix — so this can
+  // only ever open a page of our own site.
+  const openInNewTab = () => window.open(path, "_blank", "noopener,noreferrer");
+
+  // Behave like a real link: Ctrl+click (also Ctrl + touchpad tap) or
+  // Cmd+click on a Mac opens a new tab; a plain click navigates as before.
+  const handleCardClick = (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      openInNewTab();
+      return;
+    }
+    goToPost();
+  };
+
+  // Middle mouse button (wheel click) -> new tab, same as a link.
+  const handleCardAuxClick = (e) => {
+    if (e.button === 1) {
+      e.preventDefault();
+      openInNewTab();
+    }
+  };
 
   const handleCardKeyDown = (e) => {
+    // Ctrl/Cmd+Enter on the focused card itself (not on a button inside it)
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && e.target === e.currentTarget) {
+      e.preventDefault();
+      openInNewTab();
+      return;
+    }
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       goToPost();
     }
   };
+
+  // Ctrl/Cmd+Enter while the mouse pointer is over the card — even if the
+  // card isn't focused. The listener only exists while the pointer is over
+  // THIS card, and it stays out of the way when you're typing in a field.
+  const [hovered, setHovered] = useState(false);
+  useEffect(() => {
+    if (!hovered) return undefined;
+    const onKey = (e) => {
+      if (e.defaultPrevented || e.key !== "Enter" || !(e.ctrlKey || e.metaKey)) return;
+      const t = e.target;
+      if (t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      e.preventDefault();
+      window.open(path, "_blank", "noopener,noreferrer");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [hovered, path]);
 
   // Image: tap = open the post (same as clicking anywhere else on the
   // card — no special-casing needed, just let the click bubble up).
@@ -170,7 +216,10 @@ export default function PostCard({ post }) {
         role="link"
         tabIndex={0}
         onClick={handleCardClick}
+        onAuxClick={handleCardAuxClick}
         onKeyDown={handleCardKeyDown}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         className="bg-white border border-borderClr rounded-xl overflow-hidden hover:border-primary/40 transition-colors cursor-pointer group"
       >
         <div className="flex justify-end px-3 pt-3">

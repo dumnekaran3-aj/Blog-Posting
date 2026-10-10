@@ -5,12 +5,28 @@
       "destination": "https://vritywire-backend.onrender.com/sitemap.xml"
     },
     {
+      "source": "/sitemap-static.xml",
+      "destination": "https://vritywire-backend.onrender.com/sitemap-static.xml"
+    },
+    {
+      "source": "/sitemap-posts.xml",
+      "destination": "https://vritywire-backend.onrender.com/sitemap-posts.xml"
+    },
+    {
+      "source": "/static/sitemap",
+      "destination": "https://vritywire-backend.onrender.com/static/sitemap"
+    },
+    {
+      "source": "/static/sitemap.xml",
+      "destination": "https://vritywire-backend.onrender.com/static/sitemap.xml"
+    },
+    {
       "source": "/blog/:slug",
       "has": [
         {
           "type": "header",
           "key": "user-agent",
-          "value": "(?i).*(googlebot|google-inspectiontool|adsbot-google|bingbot|duckduckbot|yandexbot|baiduspider|applebot|facebookexternalhit|facebot|twitterbot|linkedinbot|whatsapp|slackbot|telegrambot|discordbot|pinterest|redditbot|embedly|skypeuripreview).*"
+          "value": ".*(Googlebot|Google-InspectionTool|AdsBot-Google|[Bb]ingbot|BingPreview|DuckDuckBot|YandexBot|Baiduspider|Applebot|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|Slackbot|TelegramBot|Discordbot|Pinterest|[Rr]edditbot|Embedly|SkypeUriPreview).*"
         }
       ],
       "destination": "/api/post-meta?type=blog&slug=:slug"
@@ -21,7 +37,7 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": "(?i).*(googlebot|google-inspectiontool|adsbot-google|bingbot|duckduckbot|yandexbot|baiduspider|applebot|facebookexternalhit|facebot|twitterbot|linkedinbot|whatsapp|slackbot|telegrambot|discordbot|pinterest|redditbot|embedly|skypeuripreview).*"
+          "value": ".*(Googlebot|Google-InspectionTool|AdsBot-Google|[Bb]ingbot|BingPreview|DuckDuckBot|YandexBot|Baiduspider|Applebot|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|Slackbot|TelegramBot|Discordbot|Pinterest|[Rr]edditbot|Embedly|SkypeUriPreview).*"
         }
       ],
       "destination": "/api/post-meta?type=news&slug=:slug"
